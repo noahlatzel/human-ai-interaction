@@ -1,0 +1,109 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - "apps/api/**"
+              - ".github/workflows/backend-ci.yaml"
+            frontend:
+              - "apps/web/**"
+              - "packages/api-client/**"
+              - ".github/workflows/frontend-ci.yaml"
+
+  backend-ci:
+    name: backend-ci
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: No backend changes → fast-pass
+        if: needs.detect-changes.outputs.backend != 'true'
+        run: echo "No backend changes; marking backend-ci as success."
+
+      - name: Check out repository
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: astral-sh/setup-uv@v3
+
+      - name: Cache uv
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('apps/api/pyproject.toml', 'apps/api/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install dependencies
+        if: needs.detect-changes.outputs.backend == 'true'
+        working-directory: apps/api
+        run: uv sync --dev
+
+      - name: Ruff (format)
+        if: needs.detect-changes.outputs.backend == 'true'
+        working-directory: apps/api
+        run: uv run ruff format --check .
+
+      - name: Ruff (lint)
+        if: needs.detect-changes.outputs.backend == 'true'
+        working-directory: apps/api
+        run: uv run ruff check .
+
+      - name: mypy (typing)
+        if: needs.detect-changes.outputs.backend == 'true'
+        working-directory: apps/api
+        run: uv run mypy .
+
+  frontend-ci:
+    name: frontend-ci
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: No frontend changes → fast-pass
+        if: needs.detect-changes.outputs.frontend != 'true'
+        run: echo "No frontend changes; marking frontend-ci as success."
+
+      - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.frontend == 'true'
+
+      - uses: actions/setup-node@v4
+        if: needs.detect-changes.outputs.frontend == 'true'
+        with:
+          node-version: "lts/*"
+          cache: "npm"
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            package-lock.json
+
+      - name: Install deps (web)
+        if: needs.detect-changes.outputs.frontend == 'true'
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Lint
+        if: needs.detect-changes.outputs.frontend == 'true'
+        working-directory: apps/web
+        run: npm run lint
+
+      - name: Build
+        if: needs.detect-changes.outputs.frontend == 'true'
+        working-directory: apps/web
+        run: npm run build
