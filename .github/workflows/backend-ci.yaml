@@ -1,0 +1,47 @@
+name: backend-ci
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/backend-ci.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('apps/api/pyproject.toml', 'apps/api/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install dependencies
+        working-directory: apps/api
+        run: |
+          uv sync --dev
+
+      - name: Ruff (format)
+        working-directory: apps/api
+        run: uv run ruff format --check .
+
+      - name: Ruff (lint)
+        working-directory: apps/api
+        run: uv run ruff check .
+
+      - name: mypy (typing)
+        working-directory: apps/api
+        run: uv run mypy .

@@ -1,0 +1,23 @@
+[project]
+name = "human-ai-interaction-backend"
+version = "0.1.0"
+description = "This project contains the backend for the application we develop in the 'Human-AI Interaction' course."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+test = [
+    "pytest"
+]
+lint = [
+    "ruff",
+]
+typing = [
+    "mypy"
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "typing" },
+]
