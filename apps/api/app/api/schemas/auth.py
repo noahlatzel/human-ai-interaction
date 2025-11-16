@@ -26,7 +26,14 @@ class RegisterRequest(BaseModel):
     role: Literal["teacher", "student"]
     first_name: str | None = Field(default=None, alias="firstName")
     last_name: str | None = Field(default=None, alias="lastName")
-    teacher_id: str | None = Field(default=None, alias="teacherId")
+    teacher_id: str | None = Field(
+        default=None,
+        alias="teacherId",
+        description=(
+            "Teacher ID a student should be assigned to. "
+            "Teachers registering students ignore this value, and solo students can omit it."
+        ),
+    )
 
 
 class AuthSuccess(BaseModel):

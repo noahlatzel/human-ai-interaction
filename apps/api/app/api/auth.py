@@ -68,7 +68,15 @@ async def register(
     if payload.role == "student":
         if actor and actor.role == "teacher":
             teacher_id = actor.uid
-        teacher_id = teacher_id or "solo-student"
+        else:
+            if teacher_id:
+                teacher = await user_store.get_user_by_id(session, teacher_id)
+                if teacher is None or teacher.role != "teacher":
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Teacher not found",
+                    )
+            teacher_id = teacher_id or "solo-student"
 
     user = await user_store.create_user(
         session,

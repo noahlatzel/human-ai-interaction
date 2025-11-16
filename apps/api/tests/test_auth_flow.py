@@ -15,8 +15,8 @@ from app.config import reset_settings_cache
 def client(tmp_path) -> Iterator[TestClient]:
     """Return a TestClient wired to an isolated SQLite database."""
     db_path = tmp_path / "auth.db"
-    os.environ["HAI_SQLITE_URL"] = f"sqlite+aiosqlite:///{db_path}"
-    os.environ["HAI_JWT_SECRET"] = "test-secret"
+    os.environ["HAII_SQLITE_URL"] = f"sqlite+aiosqlite:///{db_path}"
+    os.environ["HAII_JWT_SECRET"] = "test-secret"
     reset_settings_cache()
     application = create_app()
     with TestClient(application) as test_client:
@@ -97,6 +97,63 @@ def test_register_student_as_teacher(client: TestClient) -> None:
     student_body = student_resp.json()
     assert student_body["user"]["role"] == "student"
     assert student_body["user"]["teacherId"] == teacher_tokens["user"]["id"]
+
+
+def test_register_solo_student(client: TestClient) -> None:
+    """Students without a teacher get the solo-student placeholder."""
+    response = client.post(
+        "/v1/auth/register",
+        json={
+            "email": unique_email("solo-student"),
+            "password": "studpw",
+            "role": "student",
+        },
+    )
+    assert response.status_code == 201
+    assert response.json()["user"]["teacherId"] == "solo-student"
+
+
+def test_register_student_with_specific_teacher(client: TestClient) -> None:
+    """Admin can assign a student to a specific teacher id."""
+    admin_tokens = _login(client, "admin@example.com", "adminpw")
+    teacher_resp = client.post(
+        "/v1/auth/register",
+        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+        json={
+            "email": unique_email("assign-teacher"),
+            "password": "teachpw",
+            "role": "teacher",
+        },
+    )
+    assert teacher_resp.status_code == 201
+    teacher_id = teacher_resp.json()["user"]["id"]
+
+    student_resp = client.post(
+        "/v1/auth/register",
+        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+        json={
+            "email": unique_email("student-assigned"),
+            "password": "studpw",
+            "role": "student",
+            "teacherId": teacher_id,
+        },
+    )
+    assert student_resp.status_code == 201
+    assert student_resp.json()["user"]["teacherId"] == teacher_id
+
+
+def test_register_student_invalid_teacher_id(client: TestClient) -> None:
+    """Supplying a non-existent teacher id fails."""
+    response = client.post(
+        "/v1/auth/register",
+        json={
+            "email": unique_email("invalid-teacher"),
+            "password": "studpw",
+            "role": "student",
+            "teacherId": "missing-teacher-id",
+        },
+    )
+    assert response.status_code == 404
 
 
 def test_register_conflict_returns_409(client: TestClient) -> None:
