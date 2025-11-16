@@ -11,3 +11,6 @@ wheels/
 
 # IDEs
 .idea/
+
+# Agentic
+plans/

@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "This project contains the backend for the application we develop in the 'Human-AI Interaction' course."
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "fastapi>=0.121.2",
+]
 
 [dependency-groups]
 test = [
