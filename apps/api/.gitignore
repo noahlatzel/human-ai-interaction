@@ -12,5 +12,8 @@ wheels/
 # IDEs
 .idea/
 
+# Environment
+.env
+
 # Agentic
 plans/
