@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import type { LoginFormData } from '../types/auth';
 import { loginUser, storeAuthToken } from '../services/auth';
+import logo from '../assets/login2.webp';
 
 interface LoginProps {
     onLoginSuccess?: () => void;
@@ -72,14 +73,14 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center py-10 px-4">
-            <div className="relative bg-white/80 backdrop-blur-xl rounded-[32px] shadow-[0_8px_40px_rgba(139,92,246,0.12)] p-8 sm:p-10 md:p-12 max-w-md w-full border border-purple-100/50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center py-10 px-4">
+            <div className="relative bg-white/80 backdrop-blur-xl rounded-[32px] shadow-[0_8px_40px_rgba(59,130,246,0.12)] p-8 sm:p-10 md:p-12 max-w-md w-full border border-blue-100/50">
                 {/* Branding Header - Always Visible */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 mb-4 shadow-lg shadow-purple-500/30">
-                        <span className="text-3xl font-bold text-white">M</span>
+                    <div className="inline-flex items-center justify-center w-24 h-24 mb-4 shadow-lg rounded-3xl overflow-hidden">
+                        <img src={logo} alt="MathApp Logo" className="w-full h-full object-cover" />
                     </div>
-                    <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">MathApp</h1>
+                    <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">MathApp</h1>
                     <p className="mt-2 text-sm text-slate-500">Lerne Mathematik auf eine neue Art</p>
                 </div>
 
@@ -98,7 +99,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     value={registrationData.fullName}
                                     onChange={handleRegistrationChange('fullName')}
                                     placeholder="Max Mustermann"
-                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-purple-400 focus:ring-4 focus:ring-purple-100 focus:outline-none"
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
                                     required
                                 />
                             </div>
@@ -109,7 +110,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     value={registrationData.email}
                                     onChange={handleRegistrationChange('email')}
                                     placeholder="name@beispiel.de"
-                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-purple-400 focus:ring-4 focus:ring-purple-100 focus:outline-none"
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
                                     required
                                 />
                             </div>
@@ -120,7 +121,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     value={registrationData.password}
                                     onChange={handleRegistrationChange('password')}
                                     placeholder="••••••••"
-                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-purple-400 focus:ring-4 focus:ring-purple-100 focus:outline-none"
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
                                     required
                                 />
                             </div>
@@ -132,8 +133,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     onChange={handleRegistrationChange('confirmPassword')}
                                     placeholder="••••••••"
                                     className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none ${registrationData.confirmPassword && registrationData.confirmPassword !== registrationData.password
-                                            ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-                                            : 'border-slate-200 focus:border-purple-400 focus:ring-purple-100'
+                                        ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+                                        : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
                                         }`}
                                     required
                                 />
@@ -143,7 +144,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                             </div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center items-center py-4 mt-6 rounded-xl text-base font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40"
+                                className="w-full flex justify-center items-center py-4 mt-6 rounded-xl text-base font-bold text-white bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
                             >
                                 Registrierung senden
                             </button>
@@ -151,7 +152,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                 <button
                                     type="button"
                                     onClick={() => setShowRegistration(false)}
-                                    className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors"
+                                    className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                                 >
                                     ← Zurück zum Login
                                 </button>
@@ -183,7 +184,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                             message: 'Mindestens 3 Zeichen erforderlich',
                                         },
                                     })}
-                                    className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.usernameOrEmail ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-purple-400 focus:ring-purple-100'
+                                    className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.usernameOrEmail ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
                                         }`}
                                     placeholder="name@beispiel.de"
                                 />
@@ -208,7 +209,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                                 message: 'Passwort muss mindestens 6 Zeichen haben',
                                             },
                                         })}
-                                        className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-purple-400 focus:ring-purple-100'
+                                        className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
                                             }`}
                                         placeholder="••••••••••"
                                     />
@@ -228,7 +229,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                 <div className="text-right mt-2">
                                     <a
                                         href="#"
-                                        className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors"
+                                        className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             toast('Passwort-zurücksetzen kommt bald!', { icon: '🔒' });
@@ -251,7 +252,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     aria-checked={rememberMe}
                                     disabled={isLoading}
                                     onClick={() => setRememberMe(!rememberMe)}
-                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${rememberMe ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-slate-300'
+                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${rememberMe ? 'bg-gradient-to-r from-blue-600 to-green-600' : 'bg-slate-300'
                                         }`}
                                 >
                                     <span
@@ -265,7 +266,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full flex items-center justify-center py-4 mt-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 text-base font-bold text-white shadow-lg shadow-purple-500/30 transition-all hover:from-purple-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-purple-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="w-full flex items-center justify-center py-4 mt-6 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-green-700 hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {isLoading ? (
                                     <>
@@ -286,7 +287,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     Noch kein Konto?{' '}
                                     <a
                                         href="#"
-                                        className="font-semibold text-purple-600 hover:text-purple-700 transition-colors"
+                                        className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             setShowRegistration(true);
