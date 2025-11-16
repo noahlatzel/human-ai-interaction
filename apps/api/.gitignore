@@ -15,5 +15,8 @@ wheels/
 # Environment
 .env
 
+# Database
+auth.db
+
 # Agentic
 plans/
