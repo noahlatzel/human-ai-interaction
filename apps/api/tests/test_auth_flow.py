@@ -87,7 +87,11 @@ def test_register_student_as_teacher(client: TestClient) -> None:
     student_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
-        json={"email": unique_email("student"), "password": "studpw", "role": "student"},
+        json={
+            "email": unique_email("student"),
+            "password": "studpw",
+            "role": "student",
+        },
     )
     assert student_resp.status_code == 201
     student_body = student_resp.json()
@@ -151,6 +155,8 @@ def test_refresh_and_logout_flow(client: TestClient) -> None:
         json={"refreshToken": refreshed["refreshToken"]},
     )
     assert post_logout.status_code == 401
+
+
 def unique_email(label: str) -> str:
     """Return a unique email address for tests."""
     return f"{label}-{uuid4().hex}@example.com"
