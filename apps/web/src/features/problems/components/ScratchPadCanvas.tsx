@@ -93,7 +93,7 @@ export default function ScratchPadCanvas({ onChange }: ScratchPadCanvasProps) {
       <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm relative">
         <canvas
           ref={canvasRef}
-          className="w-full h-80 touch-none"
+          className="w-full h-72 md:h-80 touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}

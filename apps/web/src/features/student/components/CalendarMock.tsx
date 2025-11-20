@@ -56,7 +56,7 @@ export default function CalendarMock() {
         color: 'purple',
       },
     ],
-    [currentDate],
+    [],
   );
 
   const startOffset = firstDayOfMonth(currentDate) === 0 ? 6 : firstDayOfMonth(currentDate) - 1;

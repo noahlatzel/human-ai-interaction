@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProblemHeader from '../components/ProblemHeader';
 import ProblemStatement from '../components/ProblemStatement';
-import ScratchPadToggle from '../components/ScratchPadToggle';
 import ScratchPadCanvas from '../components/ScratchPadCanvas';
 import ScratchPadText from '../components/ScratchPadText';
 import AnswerForm from '../components/AnswerForm';
@@ -24,9 +23,7 @@ export default function ProblemPage() {
   const location = useLocation();
   const state = location.state as LocationState | null;
 
-  const [mode, setMode] = useState<'draw' | 'text'>('draw');
   const [textAnswer, setTextAnswer] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [, setSketch] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,12 +44,19 @@ export default function ProblemPage() {
     [],
   );
 
-  const handleSubmit = async (solved: boolean) => {
+  const normalize = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[.,;:!?\s]+$/g, '');
+
+  const handleSubmit = async () => {
     if (!problem) return;
     setSubmitting(true);
     try {
-      await submitProgress({ mathWordProblemId: problem.id, success: solved });
-      toast.success('Fortschritt gespeichert');
+      const success = normalize(textAnswer) === normalize(problem.solution);
+      await submitProgress({ mathWordProblemId: problem.id, success });
+      toast.success(success ? 'Richtig! Fortschritt gespeichert.' : 'Gespeichert, aber Lösung prüfen.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Konnte Fortschritt nicht speichern';
       toast.error(message);
@@ -104,7 +108,7 @@ export default function ProblemPage() {
         backgroundPosition: 'center',
       }}
     >
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 relative z-10">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 relative z-10">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -113,7 +117,7 @@ export default function ProblemPage() {
           ← Zurück
         </button>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr,1fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-4">
             <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-5 space-y-4">
               <ProblemHeader problem={problem} />
@@ -122,28 +126,25 @@ export default function ProblemPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">Dein Rechenweg</h2>
-                <ScratchPadToggle mode={mode} onChange={setMode} />
-              </div>
-              {mode === 'draw' ? (
+            <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-5 space-y-4">
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold text-slate-900">Dein Rechenweg (Skizze)</h2>
                 <ScratchPadCanvas onChange={setSketch} />
-              ) : (
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold text-slate-900">Deine Lösung (Text)</h2>
                 <ScratchPadText value={textAnswer} onChange={setTextAnswer} />
-              )}
-              <p className="text-xs text-slate-500">
-                Skizzen und Texte bleiben nur lokal gespeichert und werden beim Abgeben nicht
-                hochgeladen.
-              </p>
+              </div>
+
               <AnswerForm isSubmitting={submitting} onSubmit={handleSubmit} onNext={handleNext} />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="fixed right-4 bottom-4 z-20">
-        <div className="rounded-2xl bg-white/95 border border-emerald-100 shadow-xl p-4 max-w-xs flex gap-3 items-center">
+      <div className="fixed left-4 bottom-4 z-20">
+        <div className="rounded-2xl bg-white/95 border border-emerald-100 shadow-xl p-4 max-w-[15rem] flex gap-3 items-center">
           <img src={companion} alt="Begleiter" className="w-16 h-16 object-contain drop-shadow" />
           <div className="space-y-1">
             <p className="text-sm font-semibold text-emerald-700">Brauchst du Hilfe?</p>

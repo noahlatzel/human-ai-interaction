@@ -19,6 +19,7 @@ const ProgressBar = ({ percent }: { percent: number }) => (
 export default function StudentRow({ student, onToggleGroup, onDelete }: StudentRowProps) {
   const fullName =
     [student.firstName, student.lastName].filter(Boolean).join(' ') || `Schüler ${student.studentId}`;
+  const percent = student.completionRate * 100;
 
   return (
     <div className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 py-3 last:border-0">
@@ -30,11 +31,11 @@ export default function StudentRow({ student, onToggleGroup, onDelete }: Student
         <div className="text-sm font-semibold text-slate-800">
           {student.solved}/{student.totalProblems}
         </div>
-        <ProgressBar percent={student.completionRate} />
+        <ProgressBar percent={percent} />
       </div>
       <div className="col-span-2">
         <div className="text-sm font-semibold text-slate-800 text-center">
-          {Math.round(student.completionRate)}%
+          {Math.round(percent)}%
         </div>
         <div className="text-xs text-slate-500 text-center">Erfolgsrate</div>
       </div>
