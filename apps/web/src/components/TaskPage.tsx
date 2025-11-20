@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import squirrelImage from '../assets/WhatsApp_Image_2025-11-19_at_19.11.00-removebg-preview.png';
-import forestBackground from '../assets/ChatGPT Image 19. Nov. 2025, 19_18_02.png';
+import forestBackground from '../assets/Forest.png';
 
 interface Task {
   text: string;
@@ -137,7 +137,7 @@ const TaskPage: React.FC<TaskPageProps> = ({ task, onSubmit, onBackToDashboard, 
         {/* Solution Section */}
         <div className="task-solution-section">
           <div className="solution-header">
-            <h3 className="solution-title">Deine Lösung</h3>
+            <h3 className="solution-title">Dein Rechenweg</h3>
             <button 
               className="clear-canvas-btn"
               onClick={clearCanvas}
@@ -163,14 +163,14 @@ const TaskPage: React.FC<TaskPageProps> = ({ task, onSubmit, onBackToDashboard, 
             />
             <div className="canvas-placeholder">
               <span className="placeholder-icon">✏️</span>
-              <span className="placeholder-text">Zeichne hier deine Lösung</span>
+              <span className="placeholder-text">Bitte hier deinen Rechenweg angeben</span>
             </div>
           </div>
 
           {/* Text Answer */}
           <div className="text-answer-section">
             <label htmlFor="textAnswer" className="text-answer-label">
-              Oder gib deine Antwort als Text ein:
+              Hier bitte deine Lösung eingeben:
             </label>
             <textarea
               id="textAnswer"

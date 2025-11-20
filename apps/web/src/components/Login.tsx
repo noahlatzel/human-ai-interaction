@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import type { LoginFormData } from '../types/auth';
 import { loginUser, storeAuthToken } from '../services/auth';
@@ -11,6 +12,7 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [showRegistration, setShowRegistration] = useState(false);
@@ -256,7 +258,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                             </button>
 
                             {/* Sign Up Link */}
-                            <div className="pt-5 text-center">
+                            <div className="pt-5 text-center space-y-4">
                                 <p className="text-sm text-slate-600">
                                     Noch kein Konto?{' '}
                                     <a
@@ -270,6 +272,18 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                         Jetzt registrieren
                                     </a>
                                 </p>
+                                <div className="relative flex items-center py-2">
+                                    <div className="flex-grow border-t border-slate-300"></div>
+                                    <span className="px-3 text-xs text-slate-500 bg-white">oder</span>
+                                    <div className="flex-grow border-t border-slate-300"></div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/teacher-login')}
+                                    className="w-full flex justify-center items-center py-3 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all border-2 border-slate-300"
+                                >
+                                    👨‍🏫 Lehrerlogin
+                                </button>
                             </div>
                         </form>
                     </div>

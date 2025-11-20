@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
+import TeacherLogin from './components/TeacherLogin';
+import TeacherDashboard from './components/TeacherDashboard';
+import TeacherAccountPage from './components/TeacherAccountPage';
 import Dashboard from './components/Dashboard';
 import AccountPage from './components/AccountPage';
 import TaskPage from './components/TaskPage';
-import TopicsPage from './components/TopicsPage';
 import CalendarPage from './components/CalendarPage';
 import DiscoverPage from './components/DiscoverPage';
+import TopicDetailPage from './components/TopicDetailPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -61,6 +64,36 @@ function App() {
           }
         />
         <Route
+          path="/teacher-login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/teacher-dashboard" replace />
+            ) : (
+              <TeacherLogin onLoginSuccess={handleLoginSuccess} />
+            )
+          }
+        />
+        <Route
+          path="/teacher-dashboard"
+          element={
+            isAuthenticated ? (
+              <TeacherDashboardWrapper onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/teacher-login" replace />
+            )
+          }
+        />
+        <Route
+          path="/teacher-account"
+          element={
+            isAuthenticated ? (
+              <TeacherAccountPageWrapper />
+            ) : (
+              <Navigate to="/teacher-login" replace />
+            )
+          }
+        />
+        <Route
           path="/dashboard"
           element={
             isAuthenticated ? (
@@ -103,10 +136,10 @@ function App() {
           }
         />
         <Route
-          path="/topics"
+          path="/topic/:topicId"
           element={
             isAuthenticated ? (
-              <TopicsPageWrapper />
+              <TopicDetailPageWrapper />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -136,10 +169,10 @@ function DashboardWrapper({ onLogout }: { onLogout: () => void }) {
   return (
     <Dashboard
       onNavigateToTask={() => navigate('/task')}
-      onNavigateToTopics={() => navigate('/topics')}
       onNavigateToAccount={() => navigate('/account')}
       onNavigateToCalendar={() => navigate('/calendar')}
       onNavigateToDiscover={() => navigate('/discover')}
+      onNavigateToTopicDetail={(topicId) => navigate(`/topic/${topicId}`)}
       onLogout={onLogout}
     />
   );
@@ -149,7 +182,12 @@ function CalendarPageWrapper() {
   const navigate = useNavigate();
   
   return (
-    <CalendarPage onBackToDashboard={() => navigate('/dashboard')} />
+    <CalendarPage 
+      onBackToDashboard={() => navigate('/dashboard')}
+      onNavigateToDashboard={() => navigate('/dashboard')}
+      onNavigateToDiscover={() => navigate('/discover')}
+      onNavigateToAccount={() => navigate('/account')}
+    />
   );
 }
 
@@ -173,14 +211,16 @@ function TaskPageWrapper() {
   );
 }
 
-function TopicsPageWrapper() {
+function TopicDetailPageWrapper() {
   const navigate = useNavigate();
+  const { topicId } = useParams<{ topicId: string }>();
   
   return (
-    <TopicsPage
+    <TopicDetailPage
+      topicId={topicId || ''}
       onBackToDashboard={() => navigate('/dashboard')}
-      onSelectTopic={(topic) => {
-        console.log('Selected topic:', topic);
+      onStartLevel={(topicId, levelId) => {
+        console.log('Starting level:', topicId, levelId);
         navigate('/task');
       }}
     />
@@ -191,7 +231,31 @@ function DiscoverPageWrapper() {
   const navigate = useNavigate();
   
   return (
-    <DiscoverPage onBackToDashboard={() => navigate('/dashboard')} />
+    <DiscoverPage 
+      onBackToDashboard={() => navigate('/dashboard')}
+      onNavigateToDashboard={() => navigate('/dashboard')}
+      onNavigateToCalendar={() => navigate('/calendar')}
+      onNavigateToAccount={() => navigate('/account')}
+    />
+  );
+}
+
+function TeacherDashboardWrapper({ onLogout }: { onLogout: () => void }) {
+  const navigate = useNavigate();
+  
+  return (
+    <TeacherDashboard 
+      onLogout={onLogout}
+      onNavigateToAccount={() => navigate('/teacher-account')}
+    />
+  );
+}
+
+function TeacherAccountPageWrapper() {
+  const navigate = useNavigate();
+  
+  return (
+    <TeacherAccountPage onBackToDashboard={() => navigate('/teacher-dashboard')} />
   );
 }
 

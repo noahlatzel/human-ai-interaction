@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import avatarImage from '../assets/ChatGPT_Image_19._Nov._2025__19_49_20-removebg-preview.png';
+import avatarImage from '../assets/Lehrer_Avatar.png';
 import forestBackground from '../assets/Forest.png';
 import '../components/styles.css';
 
-interface AccountPageProps {
+interface TeacherAccountPageProps {
   onBackToDashboard?: () => void;
 }
 
-const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
+const TeacherAccountPage: React.FC<TeacherAccountPageProps> = ({ onBackToDashboard }) => {
   const [profileData, setProfileData] = useState({
-    firstName: 'Max',
-    lastName: 'Mustermann',
-    email: 'max@example.com',
-    klasse: '5a'
+    firstName: 'Maria',
+    lastName: 'Schmidt',
+    email: 'maria.schmidt@schule.de',
+    school: 'Grundschule Musterstadt',
+    subjects: 'Mathematik, Deutsch',
+    phone: '+49 123 456789'
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -20,7 +22,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
   };
 
   const handleSave = () => {
-    console.log('Saving profile:', profileData);
+    console.log('Saving teacher profile:', profileData);
     // Add save logic here
   };
 
@@ -51,7 +53,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
             alt="Avatar"
             className="account-avatar-new"
           />
-          <h1 className="account-title-new">Mein Konto</h1>
+          <h1 className="account-title-new">Lehrer-Konto</h1>
         </div>
       </header>
 
@@ -66,7 +68,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
               <input 
                 type="text" 
                 className="account-input-new"
-                placeholder="Max"
+                placeholder="Maria"
                 value={profileData.firstName}
                 onChange={(e) => handleInputChange('firstName', e.target.value)}
               />
@@ -76,7 +78,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
               <input 
                 type="text" 
                 className="account-input-new"
-                placeholder="Mustermann"
+                placeholder="Schmidt"
                 value={profileData.lastName}
                 onChange={(e) => handleInputChange('lastName', e.target.value)}
               />
@@ -86,19 +88,39 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
               <input 
                 type="email" 
                 className="account-input-new"
-                placeholder="max@example.com"
+                placeholder="maria.schmidt@schule.de"
                 value={profileData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
               />
             </div>
             <div className="account-form-item-new">
-              <label className="account-label-new">Klasse</label>
+              <label className="account-label-new">Schule</label>
               <input 
                 type="text" 
                 className="account-input-new"
-                placeholder="5a"
-                value={profileData.klasse}
-                onChange={(e) => handleInputChange('klasse', e.target.value)}
+                placeholder="Grundschule Musterstadt"
+                value={profileData.school}
+                onChange={(e) => handleInputChange('school', e.target.value)}
+              />
+            </div>
+            <div className="account-form-item-new">
+              <label className="account-label-new">Fächer</label>
+              <input 
+                type="text" 
+                className="account-input-new"
+                placeholder="Mathematik, Deutsch"
+                value={profileData.subjects}
+                onChange={(e) => handleInputChange('subjects', e.target.value)}
+              />
+            </div>
+            <div className="account-form-item-new">
+              <label className="account-label-new">Telefon</label>
+              <input 
+                type="tel" 
+                className="account-input-new"
+                placeholder="+49 123 456789"
+                value={profileData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
               />
             </div>
           </div>
@@ -109,24 +131,24 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
           <h2 className="account-section-title-new">Statistiken</h2>
           <div className="account-stats-grid-new">
             <div className="account-stat-card-new">
-              <div className="account-stat-icon-new">📊</div>
-              <div className="account-stat-value-new">650</div>
-              <div className="account-stat-label-new">XP Gesamt</div>
+              <div className="account-stat-icon-new">👥</div>
+              <div className="account-stat-value-new">24</div>
+              <div className="account-stat-label-new">Schüler gesamt</div>
             </div>
             <div className="account-stat-card-new">
-              <div className="account-stat-icon-new">🔥</div>
-              <div className="account-stat-value-new">7</div>
-              <div className="account-stat-label-new">Tage Streak</div>
+              <div className="account-stat-icon-new">📚</div>
+              <div className="account-stat-value-new">3</div>
+              <div className="account-stat-label-new">Klassen</div>
+            </div>
+            <div className="account-stat-card-new">
+              <div className="account-stat-icon-new">📝</div>
+              <div className="account-stat-value-new">156</div>
+              <div className="account-stat-label-new">Aufgaben erstellt</div>
             </div>
             <div className="account-stat-card-new">
               <div className="account-stat-icon-new">✅</div>
-              <div className="account-stat-value-new">42</div>
-              <div className="account-stat-label-new">Aufgaben gelöst</div>
-            </div>
-            <div className="account-stat-card-new">
-              <div className="account-stat-icon-new">🏆</div>
-              <div className="account-stat-value-new">5</div>
-              <div className="account-stat-label-new">Abzeichen</div>
+              <div className="account-stat-value-new">89%</div>
+              <div className="account-stat-label-new">Durchschnittliche Erfolgsrate</div>
             </div>
           </div>
         </div>
@@ -141,13 +163,18 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
               <span className="account-setting-arrow-new">›</span>
             </button>
             <button className="account-setting-item-new">
-              <span className="account-setting-icon-new">🎨</span>
-              <span className="account-setting-text-new">Design & Darstellung</span>
+              <span className="account-setting-icon-new">👥</span>
+              <span className="account-setting-text-new">Klassenverwaltung</span>
               <span className="account-setting-arrow-new">›</span>
             </button>
             <button className="account-setting-item-new">
               <span className="account-setting-icon-new">🔒</span>
               <span className="account-setting-text-new">Passwort ändern</span>
+              <span className="account-setting-arrow-new">›</span>
+            </button>
+            <button className="account-setting-item-new">
+              <span className="account-setting-icon-new">📊</span>
+              <span className="account-setting-text-new">Berichte & Export</span>
               <span className="account-setting-arrow-new">›</span>
             </button>
             <button className="account-setting-item-new">
@@ -169,4 +196,5 @@ const AccountPage: React.FC<AccountPageProps> = ({ onBackToDashboard }) => {
   );
 };
 
-export default AccountPage;
+export default TeacherAccountPage;
+
