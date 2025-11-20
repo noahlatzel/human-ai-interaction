@@ -12,7 +12,6 @@ interface LoginProps {
 
 export default function Login({ onLoginSuccess }: LoginProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const [showRegistration, setShowRegistration] = useState(false);
     const [registrationData, setRegistrationData] = useState({
         fullName: '',
@@ -20,6 +19,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         password: '',
         confirmPassword: '',
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isGuestMode, setIsGuestMode] = useState(false);
 
     const {
         register,
@@ -37,12 +39,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         setIsLoading(true);
 
         try {
-            // Use rememberMe state instead of form data
-            const response = await loginUser({ ...data, rememberMe });
+            const response = await loginUser(data);
 
             if (response.success && response.token) {
                 toast.success('Erfolgreich angemeldet!');
-                storeAuthToken(response.token, rememberMe);
+                storeAuthToken(response.token, data.rememberMe);
                 onLoginSuccess?.();
             } else {
                 toast.error(response.error || 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.');
@@ -116,28 +117,94 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-sm font-semibold text-slate-700 ml-1">Passwort</label>
-                                <input
-                                    type="password"
-                                    value={registrationData.password}
-                                    onChange={handleRegistrationChange('password')}
-                                    placeholder="••••••••"
-                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
-                                    required
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={registrationData.password}
+                                        onChange={handleRegistrationChange('password')}
+                                        placeholder="••••••••"
+                                        className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none pr-12"
+                                        required
+                                    />
+                                    <span
+                                        className="absolute inset-y-0 right-4 flex items-center text-slate-500 cursor-pointer"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? (
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                />
+                                            </svg>
+                                        ) : (
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 9.75a3 3 0 100 4.5 3 3 0 000-4.5z"
+                                                />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M19.5 12a7.5 7.5 0 01-15 0 7.5 7.5 0 0115 0z"
+                                                />
+                                            </svg>
+                                        )}
+                                    </span>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-sm font-semibold text-slate-700 ml-1">Passwort bestätigen</label>
-                                <input
-                                    type="password"
-                                    value={registrationData.confirmPassword}
-                                    onChange={handleRegistrationChange('confirmPassword')}
-                                    placeholder="••••••••"
-                                    className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none ${registrationData.confirmPassword && registrationData.confirmPassword !== registrationData.password
-                                        ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-                                        : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-                                        }`}
-                                    required
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        value={registrationData.confirmPassword}
+                                        onChange={handleRegistrationChange('confirmPassword')}
+                                        placeholder="••••••••"
+                                        className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 ${registrationData.confirmPassword && registrationData.confirmPassword !== registrationData.password
+                                            ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+                                            : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
+                                            }`}
+                                        required
+                                    />
+                                    <span
+                                        className="absolute inset-y-0 right-4 flex items-center text-slate-500 cursor-pointer"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? (
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                />
+                                            </svg>
+                                        ) : (
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 9.75a3 3 0 100 4.5 3 3 0 000-4.5z"
+                                                />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M19.5 12a7.5 7.5 0 01-15 0 7.5 7.5 0 0115 0z"
+                                                />
+                                            </svg>
+                                        )}
+                                    </span>
+                                </div>
                                 {registrationData.confirmPassword && registrationData.confirmPassword !== registrationData.password && (
                                     <p className="text-sm text-red-500">Passwörter stimmen nicht überein.</p>
                                 )}
@@ -166,138 +233,161 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                             <h2 className="text-2xl font-bold text-slate-900">Willkommen zurück</h2>
                             <p className="text-sm text-slate-500 mt-1">Melde dich bei deinem Konto an</p>
                         </div>
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                            {/* Email Field */}
-                            <div className="space-y-2">
-                                <label htmlFor="usernameOrEmail" className="block text-sm font-semibold text-slate-700 ml-1">
-                                    E-Mail
-                                </label>
-                                <input
-                                    id="usernameOrEmail"
-                                    type="text"
-                                    autoComplete="username"
-                                    disabled={isLoading}
-                                    {...register('usernameOrEmail', {
-                                        required: 'E-Mail wird benötigt',
-                                        minLength: {
-                                            value: 3,
-                                            message: 'Mindestens 3 Zeichen erforderlich',
-                                        },
-                                    })}
-                                    className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.usernameOrEmail ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-                                        }`}
-                                    placeholder="name@beispiel.de"
-                                />
-                                {errors.usernameOrEmail && <p className="mt-2 text-sm text-red-600">{errors.usernameOrEmail.message}</p>}
-                            </div>
 
-                            {/* Password Field */}
-                            <div className="space-y-2">
-                                <label htmlFor="password" className="block text-sm font-semibold text-slate-700 ml-1">
-                                    Passwort
-                                </label>
-                                <div className="relative">
+                        {/* Login-Formular oder Gastnutzer-Formular anzeigen */}
+                        {!isGuestMode ? (
+                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                                {/* Email Field */}
+                                <div className="space-y-2">
+                                    <label htmlFor="usernameOrEmail" className="block text-sm font-semibold text-slate-700 ml-1">
+                                        E-Mail
+                                    </label>
                                     <input
-                                        id="password"
-                                        type="password"
-                                        autoComplete="current-password"
+                                        id="usernameOrEmail"
+                                        type="text"
+                                        autoComplete="username"
                                         disabled={isLoading}
-                                        {...register('password', {
-                                            required: 'Passwort wird benötigt',
+                                        {...register('usernameOrEmail', {
+                                            required: 'E-Mail wird benötigt',
                                             minLength: {
-                                                value: 6,
-                                                message: 'Passwort muss mindestens 6 Zeichen haben',
+                                                value: 3,
+                                                message: 'Mindestens 3 Zeichen erforderlich',
                                             },
                                         })}
-                                        className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
+                                        className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.usernameOrEmail ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
                                             }`}
-                                        placeholder="••••••••••"
+                                        placeholder="name@beispiel.de"
                                     />
-                                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-300">
-                                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                            />
-                                        </svg>
-                                    </span>
+                                    {errors.usernameOrEmail && <p className="mt-2 text-sm text-red-600">{errors.usernameOrEmail.message}</p>}
                                 </div>
-                                {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
-                                <div className="text-right mt-2">
-                                    <a
-                                        href="#"
-                                        className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            toast('Passwort-zurücksetzen kommt bald!', { icon: '🔒' });
-                                        }}
-                                    >
-                                        Passwort vergessen?
-                                    </a>
-                                </div>
-                            </div>
 
-                            {/* Remember Me Toggle */}
-                            <div className="flex items-center justify-between py-4 px-1">
-                                <label htmlFor="rememberToggle" className="text-sm font-semibold text-slate-700 cursor-pointer select-none" onClick={() => setRememberMe(!rememberMe)}>
-                                    Angemeldet bleiben
-                                </label>
+                                {/* Password Field */}
+                                <div className="space-y-2">
+                                    <label htmlFor="password" className="block text-sm font-semibold text-slate-700 ml-1">
+                                        Passwort
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            autoComplete="current-password"
+                                            disabled={isLoading}
+                                            {...register('password', {
+                                                required: 'Passwort wird benötigt',
+                                                minLength: {
+                                                    value: 6,
+                                                    message: 'Passwort muss mindestens 6 Zeichen haben',
+                                                },
+                                            })}
+                                            className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
+                                                }`}
+                                            placeholder="••••••••••"
+                                        />
+                                        <span
+                                            className="absolute inset-y-0 right-4 flex items-center text-slate-500 cursor-pointer"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? (
+                                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                    />
+                                                </svg>
+                                            ) : (
+                                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M12 9.75a3 3 0 100 4.5 3 3 0 000-4.5z"
+                                                    />
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M19.5 12a7.5 7.5 0 01-15 0 7.5 7.5 0 0115 0z"
+                                                    />
+                                                </svg>
+                                            )}
+                                        </span>
+                                    </div>
+                                    {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
+                                </div>
+
+                                {/* Submit Button */}
                                 <button
-                                    id="rememberToggle"
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={rememberMe}
+                                    type="submit"
                                     disabled={isLoading}
-                                    onClick={() => setRememberMe(!rememberMe)}
-                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${rememberMe ? 'bg-gradient-to-r from-blue-600 to-green-600' : 'bg-slate-300'
-                                        }`}
+                                    className="w-full flex items-center justify-center py-4 mt-6 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-green-700 hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    <span
-                                        className={`h-5 w-5 transform rounded-full bg-white shadow-lg transition-all duration-200 ease-in-out ${rememberMe ? 'translate-x-6' : 'translate-x-1'
-                                            }`}
-                                    />
+                                    {isLoading ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            Wird angemeldet...
+                                        </>
+                                    ) : (
+                                        'Anmelden'
+                                    )}
+                                </button>
+
+                                {/* Gastnutzer-Login */}
+                                <div className="pt-5 text-center">
+                                    <button
+                                        type="button"
+                                        className="w-full flex justify-center items-center py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-700 hover:to-gray-900 transition-all shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40"
+                                        onClick={() => setIsGuestMode(!isGuestMode)}
+                                    >
+                                        Als Gast fortfahren
+                                    </button>
+                                </div>
+
+                                {/* Sign Up Link */}
+                                <div className="pt-5 text-center">
+                                    <p className="text-sm text-slate-600">
+                                        Noch kein Konto?{' '}
+                                        <a
+                                            href="#"
+                                            className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setShowRegistration(true);
+                                            }}
+                                        >
+                                            Jetzt registrieren
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="space-y-4 mt-4">
+                                <input
+                                    type="text"
+                                    placeholder="Vorname"
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Nachname"
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="w-full flex justify-center items-center py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
+                                    onClick={() => toast.error('Gastmodus: Bald verfügbar!')} // Test-Fehlernachricht für Gastmodus
+                                >
+                                    Anmelden
                                 </button>
                             </div>
-
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex items-center justify-center py-4 mt-6 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-green-700 hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        Wird angemeldet...
-                                    </>
-                                ) : (
-                                    'Anmelden'
-                                )}
-                            </button>
-
-                            {/* Sign Up Link */}
-                            <div className="pt-5 text-center">
-                                <p className="text-sm text-slate-600">
-                                    Noch kein Konto?{' '}
-                                    <a
-                                        href="#"
-                                        className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setShowRegistration(true);
-                                        }}
-                                    >
-                                        Jetzt registrieren
-                                    </a>
-                                </p>
-                            </div>
-                        </form>
+                        )}
                     </div>
                 )}
             </div>
