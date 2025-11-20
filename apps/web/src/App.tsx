@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import AccountPage from './components/AccountPage';
+import TaskPage from './components/TaskPage';
+import TopicsPage from './components/TopicsPage';
+import CalendarPage from './components/CalendarPage';
+import DiscoverPage from './components/DiscoverPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,7 +15,11 @@ function App() {
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
     console.log('User logged in successfully!');
-    // TODO: Navigate to dashboard or home page
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    console.log('User logged out successfully!');
   };
 
   return (
@@ -54,20 +64,59 @@ function App() {
           path="/dashboard"
           element={
             isAuthenticated ? (
-              <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="bg-white p-8 rounded-lg shadow-lg">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                    Welcome to Dashboard!
-                  </h1>
-                  <p className="text-gray-600 mb-4">You are successfully logged in.</p>
-                  <button
-                    onClick={() => setIsAuthenticated(false)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
+              <DashboardWrapper 
+                onLogout={handleLogout}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            isAuthenticated ? (
+              <CalendarPageWrapper />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            isAuthenticated ? (
+              <AccountPageWrapper />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/task"
+          element={
+            isAuthenticated ? (
+              <TaskPageWrapper />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/topics"
+          element={
+            isAuthenticated ? (
+              <TopicsPageWrapper />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/discover"
+          element={
+            isAuthenticated ? (
+              <DiscoverPageWrapper />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -77,6 +126,72 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
+  );
+}
+
+// Wrapper components to use useNavigate hook
+function DashboardWrapper({ onLogout }: { onLogout: () => void }) {
+  const navigate = useNavigate();
+  
+  return (
+    <Dashboard
+      onNavigateToTask={() => navigate('/task')}
+      onNavigateToTopics={() => navigate('/topics')}
+      onNavigateToAccount={() => navigate('/account')}
+      onNavigateToCalendar={() => navigate('/calendar')}
+      onNavigateToDiscover={() => navigate('/discover')}
+      onLogout={onLogout}
+    />
+  );
+}
+
+function CalendarPageWrapper() {
+  const navigate = useNavigate();
+  
+  return (
+    <CalendarPage onBackToDashboard={() => navigate('/dashboard')} />
+  );
+}
+
+function AccountPageWrapper() {
+  const navigate = useNavigate();
+  
+  return (
+    <AccountPage onBackToDashboard={() => navigate('/dashboard')} />
+  );
+}
+
+function TaskPageWrapper() {
+  const navigate = useNavigate();
+  
+  return (
+    <TaskPage
+      onBackToDashboard={() => navigate('/dashboard')}
+      onNextTask={() => console.log('Next task')}
+      onSubmit={(data) => console.log('Task submitted:', data)}
+    />
+  );
+}
+
+function TopicsPageWrapper() {
+  const navigate = useNavigate();
+  
+  return (
+    <TopicsPage
+      onBackToDashboard={() => navigate('/dashboard')}
+      onSelectTopic={(topic) => {
+        console.log('Selected topic:', topic);
+        navigate('/task');
+      }}
+    />
+  );
+}
+
+function DiscoverPageWrapper() {
+  const navigate = useNavigate();
+  
+  return (
+    <DiscoverPage onBackToDashboard={() => navigate('/dashboard')} />
   );
 }
 

@@ -37,16 +37,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         setIsLoading(true);
 
         try {
-            // Use rememberMe state instead of form data
-            const response = await loginUser({ ...data, rememberMe });
-
-            if (response.success && response.token) {
-                toast.success('Erfolgreich angemeldet!');
-                storeAuthToken(response.token, rememberMe);
-                onLoginSuccess?.();
-            } else {
-                toast.error(response.error || 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.');
-            }
+            // Immer erfolgreich - Demo-Modus
+            toast.success('Erfolgreich angemeldet!');
+            // Simuliere einen Token für Demo-Zwecke
+            const demoToken = 'demo-token-' + Date.now();
+            storeAuthToken(demoToken, rememberMe);
+            onLoginSuccess?.();
         } catch (error) {
             toast.error('Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
             console.error('Login error:', error);
@@ -59,17 +55,21 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         setRegistrationData((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
-    const handleRegistrationSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleRegistrationSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (registrationData.password !== registrationData.confirmPassword) {
-            toast.error('Die Passwörter stimmen nicht überein.');
-            return;
-        }
-
-        toast.success('Registrierung übermittelt (Demo).');
+        // Immer erfolgreich - Demo-Modus
+        toast.success('Registrierung erfolgreich! Du wirst jetzt angemeldet...');
+        
+        // Kurze Verzögerung für besseres UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Automatisch einloggen nach Registrierung
+        const demoToken = 'demo-token-' + Date.now();
+        storeAuthToken(demoToken, false);
         setRegistrationData({ fullName: '', email: '', password: '', confirmPassword: '' });
         setShowRegistration(false);
+        onLoginSuccess?.();
     };
 
     return (
@@ -100,7 +100,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     onChange={handleRegistrationChange('fullName')}
                                     placeholder="Max Mustermann"
                                     className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
-                                    required
                                 />
                             </div>
                             <div className="space-y-2">
@@ -111,7 +110,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     onChange={handleRegistrationChange('email')}
                                     placeholder="name@beispiel.de"
                                     className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
-                                    required
                                 />
                             </div>
                             <div className="space-y-2">
@@ -122,7 +120,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     onChange={handleRegistrationChange('password')}
                                     placeholder="••••••••"
                                     className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
-                                    required
                                 />
                             </div>
                             <div className="space-y-2">
@@ -132,15 +129,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     value={registrationData.confirmPassword}
                                     onChange={handleRegistrationChange('confirmPassword')}
                                     placeholder="••••••••"
-                                    className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none ${registrationData.confirmPassword && registrationData.confirmPassword !== registrationData.password
-                                        ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-                                        : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-                                        }`}
-                                    required
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
                                 />
-                                {registrationData.confirmPassword && registrationData.confirmPassword !== registrationData.password && (
-                                    <p className="text-sm text-red-500">Passwörter stimmen nicht überein.</p>
-                                )}
                             </div>
                             <button
                                 type="submit"
@@ -177,18 +167,10 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                     type="text"
                                     autoComplete="username"
                                     disabled={isLoading}
-                                    {...register('usernameOrEmail', {
-                                        required: 'E-Mail wird benötigt',
-                                        minLength: {
-                                            value: 3,
-                                            message: 'Mindestens 3 Zeichen erforderlich',
-                                        },
-                                    })}
-                                    className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.usernameOrEmail ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-                                        }`}
-                                    placeholder="name@beispiel.de"
+                                    {...register('usernameOrEmail')}
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 focus:border-blue-400 focus:ring-blue-100"
+                                    placeholder="name@beispiel.de (optional)"
                                 />
-                                {errors.usernameOrEmail && <p className="mt-2 text-sm text-red-600">{errors.usernameOrEmail.message}</p>}
                             </div>
 
                             {/* Password Field */}
@@ -202,16 +184,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                         type="password"
                                         autoComplete="current-password"
                                         disabled={isLoading}
-                                        {...register('password', {
-                                            required: 'Passwort wird benötigt',
-                                            minLength: {
-                                                value: 6,
-                                                message: 'Passwort muss mindestens 6 Zeichen haben',
-                                            },
-                                        })}
-                                        className={`w-full rounded-xl border-2 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-                                            }`}
-                                        placeholder="••••••••••"
+                                    {...register('password')}
+                                        className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 transition-all focus:ring-4 focus:outline-none pr-12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 focus:border-blue-400 focus:ring-blue-100"
+                                        placeholder="•••••••••• (optional)"
                                     />
                                     <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-300">
                                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +200,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                         </svg>
                                     </span>
                                 </div>
-                                {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
                                 <div className="text-right mt-2">
                                     <a
                                         href="#"
