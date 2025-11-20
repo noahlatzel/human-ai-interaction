@@ -294,7 +294,9 @@ async def logout(
     """Invalidate a refresh token."""
     refresh_record = None
     if payload.refreshToken:
-        refresh_record = await user_store.find_refresh_token(session, payload.refreshToken)
+        refresh_record = await user_store.find_refresh_token(
+            session, payload.refreshToken
+        )
         await user_store.delete_refresh_token(session, payload.refreshToken)
     session_id = request.cookies.get(settings.session_cookie_name)
     if session_id:

@@ -79,8 +79,7 @@ def test_bearer_only_updates_session_activity(client: TestClient) -> None:
     assert after is not None
     assert after.last_seen_at >= before_last_seen
     assert (
-        after.last_seen_at != before_last_seen
-        or after.expires_at != before.expires_at
+        after.last_seen_at != before_last_seen or after.expires_at != before.expires_at
     )
 
 
