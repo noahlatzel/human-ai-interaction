@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import StudentLayout from '../components/StudentLayout';
 import ProblemList from '../components/ProblemList';
@@ -75,7 +75,7 @@ export default function StudentDashboardPage() {
     </div>
   );
 
-  let content: JSX.Element = renderHome();
+  let content: ReactNode = renderHome();
   if (view === 'discover') content = <DiscoverMock />;
   if (view === 'calendar') content = <CalendarMock />;
   if (view === 'profile')
