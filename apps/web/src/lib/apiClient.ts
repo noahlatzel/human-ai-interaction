@@ -72,4 +72,6 @@ export const apiClient = {
     request<TResponse>(path, { ...options, method: 'GET' }),
   post: <TResponse, TBody = unknown>(path: string, body: TBody, options: Omit<RequestOptions, 'method' | 'body'> = {}) =>
     request<TResponse>(path, { ...options, method: 'POST', body }),
+  delete: <TResponse = unknown>(path: string, options: Omit<RequestOptions, 'method' | 'body'> = {}) =>
+    request<TResponse>(path, { ...options, method: 'DELETE' }),
 };
