@@ -27,9 +27,11 @@ def hash_password(raw_password: str, settings: Settings) -> str:
 
 
 def verify_password(
-    raw_password: str, hashed_password: str, settings: Settings
+    raw_password: str, hashed_password: str | None, settings: Settings
 ) -> bool:
     """Return True when the provided password matches the stored hash."""
+    if not hashed_password:
+        return False
     try:
         hashed_bytes = hashed_password.encode("utf-8")
     except AttributeError:
@@ -70,3 +72,8 @@ def generate_refresh_token(settings: Settings) -> tuple[str, datetime]:
 def hash_refresh_token(token: str) -> str:
     """Hash refresh tokens before persisting them."""
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def generate_session_id() -> str:
+    """Return a cryptographically random session identifier."""
+    return secrets.token_urlsafe(32)

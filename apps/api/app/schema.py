@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 
 from app.models import User
 
@@ -13,7 +13,9 @@ class AuthContext:
     """Authenticated user context extracted from an access token."""
 
     user: User
-    claims: Mapping[str, Any]
+    claims: Optional[Mapping[str, Any]] = None
+    session_id: str | None = None
+    learning_session_id: str | None = None
 
     @property
     def role(self) -> str:

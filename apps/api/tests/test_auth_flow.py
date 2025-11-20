@@ -1,26 +1,9 @@
 from __future__ import annotations
 
-import os
-from typing import Any, Iterator
+from typing import Any
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
-
-from app import create_app
-from app.config import reset_settings_cache
-
-
-@pytest.fixture()
-def client(tmp_path) -> Iterator[TestClient]:
-    """Return a TestClient wired to an isolated SQLite database."""
-    db_path = tmp_path / "auth.db"
-    os.environ["HAII_SQLITE_URL"] = f"sqlite+aiosqlite:///{db_path}"
-    os.environ["HAII_JWT_SECRET"] = "test-secret"
-    reset_settings_cache()
-    application = create_app()
-    with TestClient(application) as test_client:
-        yield test_client
 
 
 def _login(client: TestClient, email: str, password: str) -> dict[str, Any]:

@@ -51,6 +51,21 @@ class Settings(BaseSettings):
     admin_email: str = Field(default="admin@example.com")
     admin_password: str = Field(default="adminpw")
 
+    session_cookie_name: str = Field(
+        default="haii_session",
+        description="Name of the cookie carrying the opaque session id.",
+    )
+    session_cookie_secure: bool = Field(
+        default=False,
+        description="Whether to set the session cookie as Secure (enable in prod).",
+    )
+    session_ttl_hours: float = Field(
+        default=3.0, description="Rolling session TTL (hours) refreshed on activity."
+    )
+    session_absolute_ttl_hours: float = Field(
+        default=24.0, description="Absolute maximum session lifetime (hours)."
+    )
+
     @field_validator("allowed_origins", mode="before")
     @classmethod
     def split_origins(cls, value: object) -> list[str]:

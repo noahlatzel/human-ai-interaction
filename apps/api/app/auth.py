@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import jwt
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from jwt import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,12 +23,12 @@ def _extract_bearer_token(header_value: str) -> str:
     return parts[1]
 
 
-async def get_current_user(
-    authorization: str = Header(..., alias="Authorization"),
-    settings: Settings = Depends(get_app_settings),
-    session: AsyncSession = Depends(get_db_session),
+async def _resolve_bearer_context(
+    authorization: str,
+    settings: Settings,
+    session: AsyncSession,
 ) -> AuthContext:
-    """Resolve the authenticated user from the Authorization header."""
+    """Resolve authentication using the Authorization bearer token."""
     token = _extract_bearer_token(authorization)
     try:
         payload = security.decode_access_token(token, settings)
@@ -52,20 +52,48 @@ async def get_current_user(
     return AuthContext(user=user, claims=payload)
 
 
+async def _resolve_session_context(
+    request: Request,
+) -> AuthContext | None:
+    """Resolve authentication using context prepared by middleware, if present."""
+    return getattr(request.state, "session_context", None)
+
+
+async def get_current_user(
+    request: Request,
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    settings: Settings = Depends(get_app_settings),
+    session: AsyncSession = Depends(get_db_session),
+) -> AuthContext:
+    """Resolve the authenticated user from either session cookie or bearer token."""
+    session_context = await _resolve_session_context(request)
+    if session_context:
+        return session_context
+
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing credentials"
+        )
+    return await _resolve_bearer_context(authorization, settings, session)
+
+
 async def get_optional_user(
+    request: Request,
     authorization: str | None = Header(default=None, alias="Authorization"),
     settings: Settings = Depends(get_app_settings),
     session: AsyncSession = Depends(get_db_session),
 ) -> AuthContext | None:
     """Return the current user if credentials are present and valid."""
-    if not authorization:
-        return None
-    try:
-        return await get_current_user(
-            authorization=authorization, settings=settings, session=session
-        )
-    except HTTPException:
-        return None
+    session_context = await _resolve_session_context(request)
+    if session_context:
+        return session_context
+
+    if authorization:
+        try:
+            return await _resolve_bearer_context(authorization, settings, session)
+        except HTTPException:
+            return None
+    return None
 
 
 def require_roles(*roles: str):

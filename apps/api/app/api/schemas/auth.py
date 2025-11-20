@@ -40,8 +40,10 @@ class AuthSuccess(BaseModel):
     """Response returned when authentication succeeds."""
 
     accessToken: str
-    refreshToken: str
+    refreshToken: str | None = None
     expiresIn: int
+    sessionId: str | None = None
+    learningSessionId: str | None = None
     user: UserPayload
 
 
@@ -66,6 +68,12 @@ class LogoutRequest(BaseModel):
     refreshToken: str | None = None
 
 
+class GuestLoginRequest(BaseModel):
+    """Payload for guest entry (first name only)."""
+
+    firstName: str = Field(min_length=1, max_length=64)
+
+
 __all__ = [
     "LoginRequest",
     "RegisterRequest",
@@ -73,4 +81,5 @@ __all__ = [
     "RefreshRequest",
     "RefreshResponse",
     "LogoutRequest",
+    "GuestLoginRequest",
 ]

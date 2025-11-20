@@ -20,3 +20,5 @@ auth.db
 
 # Agentic
 plans/
+docs/
+AGENTS.md

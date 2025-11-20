@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import AuthContext, get_optional_user
 from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
-from app.services import security, user_store
+from app.services import learning, security, sessions, user_store
 
-from .deps import issue_tokens
+from .deps import clear_session_cookie, issue_tokens, set_session_cookie
 from .schemas.auth import (
     AuthSuccess,
     LoginRequest,
@@ -28,6 +28,7 @@ router = APIRouter()
 @router.post("/login", response_model=AuthSuccess)
 async def login(
     payload: LoginRequest,
+    response: Response,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
 ) -> AuthSuccess:
@@ -40,9 +41,21 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
 
-    tokens = await issue_tokens(session, user, settings)
+    learning_session = await learning.start_learning_session(session, user)
+    user_session = await sessions.create_user_session(
+        session, settings, user, learning_session
+    )
+    tokens = await issue_tokens(
+        session, user, settings, include_refresh=not user.is_guest
+    )
+    set_session_cookie(response, user_session, settings)
     await session.commit()
-    return tokens
+    return tokens.model_copy(
+        update={
+            "sessionId": user_session.id,
+            "learningSessionId": learning_session.id,
+        }
+    )
 
 
 @router.post(
@@ -50,6 +63,7 @@ async def login(
 )
 async def register(
     payload: RegisterRequest,
+    response: Response,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
     actor: AuthContext | None = Depends(get_optional_user),
@@ -89,14 +103,26 @@ async def register(
         teacher_id=teacher_id,
     )
 
+    learning_session = await learning.start_learning_session(session, user)
+    user_session = await sessions.create_user_session(
+        session, settings, user, learning_session
+    )
     tokens = await issue_tokens(session, user, settings)
+    set_session_cookie(response, user_session, settings)
     await session.commit()
-    return tokens
+    return tokens.model_copy(
+        update={
+            "sessionId": user_session.id,
+            "learningSessionId": learning_session.id,
+        }
+    )
 
 
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh_tokens(
     payload: RefreshRequest,
+    request: Request,
+    response: Response,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
 ) -> RefreshResponse:
@@ -120,13 +146,38 @@ async def refresh_tokens(
         )
 
     user = record.user
+    if user.is_guest:
+        await user_store.delete_refresh_token(session, payload.refreshToken)
+        await session.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
     await user_store.delete_refresh_token(session, payload.refreshToken)
     auth_data = await issue_tokens(session, user, settings)
+    refresh_token = auth_data.refreshToken
+    if refresh_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to issue refresh token",
+        )
+
+    # If a session cookie is present, refresh its expiry as well.
+    session_id = request.cookies.get(settings.session_cookie_name)
+    if session_id:
+        validation = await sessions.validate_session(session, session_id, settings)
+        if validation.user_session:
+            user_session = validation.user_session
+            set_session_cookie(response, user_session, settings)
+        if validation.mutated:
+            await session.flush()
+
     await session.commit()
     return RefreshResponse(
         accessToken=auth_data.accessToken,
         expiresIn=auth_data.expiresIn,
-        refreshToken=auth_data.refreshToken,
+        refreshToken=refresh_token,
         user=auth_data.user,
     )
 
@@ -134,12 +185,22 @@ async def refresh_tokens(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     payload: LogoutRequest,
+    request: Request,
+    response: Response,
     session: AsyncSession = Depends(get_db_session),
+    settings: Settings = Depends(get_app_settings),
 ) -> None:
     """Invalidate a refresh token."""
     if payload.refreshToken:
         await user_store.delete_refresh_token(session, payload.refreshToken)
-        await session.commit()
+    session_id = request.cookies.get(settings.session_cookie_name)
+    if session_id:
+        user_session = await sessions.revoke_session_by_id(session, session_id)
+        if user_session:
+            await learning.end_learning_session(session, user_session.learning_session_id)
+        clear_session_cookie(response, settings)
+        request.state.skip_session_cookie_refresh = True
+    await session.commit()
 
 
 __all__ = ["router"]

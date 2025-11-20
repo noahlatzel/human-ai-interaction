@@ -1,5 +1,5 @@
 """Service layer packages."""
 
-from . import security, user_store
+from . import learning, security, sessions, user_store
 
-__all__ = ["user_store", "security"]
+__all__ = ["learning", "security", "sessions", "user_store"]

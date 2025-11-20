@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.router import api_router
 from .config import get_settings
 from .db import create_engine, create_session_factory, run_schema_migrations
+from .middleware import session_middleware
 from .services import user_store
 
 
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
         allow_credentials=True,
     )
+    app.middleware("http")(session_middleware)
     app.include_router(api_router, prefix=settings.api_prefix)
 
     @app.get("/healthz")

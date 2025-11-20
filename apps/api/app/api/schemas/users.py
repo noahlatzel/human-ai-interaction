@@ -13,13 +13,14 @@ class UserPayload(BaseModel):
     """Public user information returned to clients."""
 
     id: str
-    email: str
+    email: str | None = None
     role: Literal["admin", "teacher", "student"]
     firstName: str | None = None
     lastName: str | None = None
     teacherId: str | None = None
     createdAt: str
     updatedAt: str
+    isGuest: bool = False
 
     @classmethod
     def from_model(cls, user: User) -> "UserPayload":
@@ -34,6 +35,7 @@ class UserPayload(BaseModel):
             teacherId=user.teacher_id,
             createdAt=format_timestamp(user.created_at),
             updatedAt=format_timestamp(user.updated_at),
+            isGuest=user.is_guest,
         )
 
 

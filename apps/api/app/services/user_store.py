@@ -21,6 +21,8 @@ def _normalize_email(value: str) -> str:
 
 async def get_user_by_email(session: AsyncSession, email: str) -> Optional[User]:
     """Return the user identified by email, if any."""
+    if not email:
+        return None
     stmt = select(User).where(User.email == _normalize_email(email))
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -41,6 +43,7 @@ async def create_user(
     first_name: str | None = None,
     last_name: str | None = None,
     teacher_id: str | None = None,
+    is_guest: bool = False,
 ) -> User:
     """Create a new user with a hashed password."""
     normalized_email = _normalize_email(email)
@@ -50,6 +53,7 @@ async def create_user(
         email=normalized_email,
         password_hash=password_hash,
         role=role,
+        is_guest=is_guest,
         first_name=first_name,
         last_name=last_name,
         teacher_id=teacher_id,
@@ -121,3 +125,24 @@ async def delete_user_refresh_tokens(session: AsyncSession, user_id: str) -> Non
     await session.execute(
         delete(UserRefreshToken).where(UserRefreshToken.user_id == user_id)
     )
+
+
+async def create_guest_user(
+    session: AsyncSession,
+    *,
+    first_name: str,
+) -> User:
+    """Create a guest student user with minimal attributes."""
+    user = User(
+        id=str(uuid4()),
+        email=None,
+        password_hash=None,
+        role="student",
+        is_guest=True,
+        first_name=first_name,
+        last_name=None,
+        teacher_id="solo-student",
+    )
+    session.add(user)
+    await session.flush()
+    return user

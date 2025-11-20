@@ -1,20 +1,18 @@
-"""ORM models for authentication."""
+"""User and refresh token models."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import Any, Optional
-from sqlalchemy import DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from datetime import datetime
+from typing import Any, Optional, TYPE_CHECKING
 
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-def utcnow() -> datetime:
-    """Return a timezone-aware UTC timestamp."""
-    return datetime.now(UTC)
+from .base import Base, format_timestamp, utcnow
 
-
-class Base(DeclarativeBase):
-    """Declarative base class for ORM models."""
+if TYPE_CHECKING:
+    from .session import UserSession
+    from .learning import LearningSession
 
 
 class User(Base):
@@ -23,11 +21,12 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    email: Mapped[str] = mapped_column(
-        String(160), unique=True, nullable=False, index=True
+    email: Mapped[Optional[str]] = mapped_column(
+        String(160), unique=True, nullable=True, index=True
     )
-    password_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     role: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     first_name: Mapped[Optional[str]] = mapped_column(String(64))
     last_name: Mapped[Optional[str]] = mapped_column(String(64))
     teacher_id: Mapped[Optional[str]] = mapped_column(String(64), index=True)
@@ -39,6 +38,16 @@ class User(Base):
     )
 
     refresh_tokens: Mapped[list["UserRefreshToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    sessions: Mapped[list["UserSession"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    learning_sessions: Mapped[list["LearningSession"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -55,6 +64,7 @@ class User(Base):
             "teacherId": self.teacher_id,
             "createdAt": format_timestamp(self.created_at),
             "updatedAt": format_timestamp(self.updated_at),
+            "isGuest": self.is_guest,
         }
 
 
@@ -63,7 +73,7 @@ class UserRefreshToken(Base):
 
     __tablename__ = "user_refresh_tokens"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
@@ -78,8 +88,4 @@ class UserRefreshToken(Base):
     user: Mapped[User] = relationship(back_populates="refresh_tokens", lazy="joined")
 
 
-def format_timestamp(value: datetime) -> str:
-    """Serialize timestamps in ISO-8601 Zulu format."""
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=UTC)
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+__all__ = ["User", "UserRefreshToken"]
