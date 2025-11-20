@@ -146,9 +146,6 @@ async def register(
         actor, request, settings
     )
 
-    if payload.role == "teacher" and caller_role != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
     existing = await user_store.get_user_by_email(session, payload.email)
     if existing is not None:
         raise HTTPException(

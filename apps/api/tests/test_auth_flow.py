@@ -39,7 +39,7 @@ def test_login_invalid_credentials(client: TestClient) -> None:
 
 
 def test_register_teacher_requires_admin(client: TestClient) -> None:
-    """Registering a teacher without admin token fails."""
+    """Registering a teacher without admin token now succeeds (open registration)."""
     response = client.post(
         "/v1/auth/register",
         json={
@@ -48,7 +48,7 @@ def test_register_teacher_requires_admin(client: TestClient) -> None:
             "role": "teacher",
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 201
 
 
 def test_register_student_as_teacher(client: TestClient) -> None:

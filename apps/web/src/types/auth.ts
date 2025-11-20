@@ -1,21 +1,36 @@
-export interface LoginFormData {
-    usernameOrEmail: string;
-    password: string;
-    rememberMe: boolean;
+import type { AuthUser } from './user';
+
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
-export interface LoginResponse {
-    success: boolean;
-    error?: string;
-    token?: string;
-    user?: {
-        id: string;
-        email: string;
-        username: string;
-    };
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  role: 'teacher' | 'student';
+  firstName?: string | null;
+  lastName?: string | null;
+  teacherId?: string | null;
 }
 
-export interface AuthError {
-    message: string;
-    field?: 'usernameOrEmail' | 'password' | 'general';
+export interface GuestLoginRequest {
+  firstName: string;
+}
+
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface LogoutRequest {
+  refreshToken?: string | null;
+}
+
+export interface AuthSuccess {
+  accessToken: string;
+  refreshToken?: string | null;
+  expiresIn: number;
+  sessionId?: string | null;
+  learningSessionId?: string | null;
+  user: AuthUser;
 }
