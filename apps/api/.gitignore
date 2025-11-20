@@ -11,3 +11,14 @@ wheels/
 
 # IDEs
 .idea/
+
+# Environment
+.env
+
+# Database
+auth.db
+
+# Agentic
+plans/
+docs/
+AGENTS.md
