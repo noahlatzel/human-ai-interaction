@@ -30,9 +30,18 @@ async def issue_tokens(
     settings: Settings,
     *,
     include_refresh: bool = True,
+    session_id: str | None = None,
+    learning_session_id: str | None = None,
+    is_guest: bool | None = None,
 ) -> AuthSuccess:
     """Issue access (and optionally refresh) tokens for the provided user."""
-    access_token, access_exp = security.create_access_token(user, settings)
+    access_token, access_exp = security.create_access_token(
+        user,
+        settings,
+        session_id=session_id,
+        learning_session_id=learning_session_id,
+        is_guest=is_guest,
+    )
     refresh_token: str | None = None
     if include_refresh:
         refresh_token, refresh_exp = security.generate_refresh_token(settings)

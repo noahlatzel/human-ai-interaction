@@ -19,6 +19,7 @@ async def session_middleware(request: Request, call_next) -> FastAPIResponse:
     mutated = False
 
     session_context: AuthContext | None = None
+    request.state.cookie_session_id = session_id
     request.state.skip_session_cookie_refresh = False
     if session_id:
         session_factory = request.app.state.db_session

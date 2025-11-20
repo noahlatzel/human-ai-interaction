@@ -27,5 +27,10 @@ class AuthContext:
         """Return the user id for convenience."""
         return self.user.id
 
+    @property
+    def is_guest(self) -> bool:
+        """Return True when the user is flagged as a guest."""
+        return bool(self.user.is_guest)
+
 
 __all__ = ["AuthContext"]

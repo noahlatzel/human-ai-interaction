@@ -111,7 +111,13 @@ async def login(
         session, settings, user, learning_session
     )
     tokens = await issue_tokens(
-        session, user, settings, include_refresh=not user.is_guest
+        session,
+        user,
+        settings,
+        include_refresh=not user.is_guest,
+        session_id=user_session.id,
+        learning_session_id=learning_session.id,
+        is_guest=user.is_guest,
     )
     set_session_cookie(response, user_session, settings)
     request.state.skip_session_cookie_refresh = True
@@ -173,7 +179,14 @@ async def register(
     user_session = await sessions.create_user_session(
         session, settings, user, learning_session
     )
-    tokens = await issue_tokens(session, user, settings)
+    tokens = await issue_tokens(
+        session,
+        user,
+        settings,
+        session_id=user_session.id,
+        learning_session_id=learning_session.id,
+        is_guest=user.is_guest,
+    )
     set_session_cookie(response, user_session, settings)
     request.state.skip_session_cookie_refresh = True
     await session.commit()
@@ -222,23 +235,44 @@ async def refresh_tokens(
         )
 
     await user_store.delete_refresh_token(session, payload.refreshToken)
-    auth_data = await issue_tokens(session, user, settings)
+
+    session_id = request.cookies.get(settings.session_cookie_name)
+    validated_session = None
+    if session_id:
+        validation = await sessions.validate_session(session, session_id, settings)
+        if validation.user_session and validation.user_session.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+            )
+        if validation.user_session:
+            validated_session = validation.user_session
+            set_session_cookie(response, validation.user_session, settings)
+        if validation.mutated:
+            await session.flush()
+
+    if validated_session is None:
+        learning_session = await learning.start_learning_session(session, user)
+        validated_session = await sessions.create_user_session(
+            session, settings, user, learning_session
+        )
+        set_session_cookie(response, validated_session, settings)
+    else:
+        learning_session = validated_session.learning_session
+
+    auth_data = await issue_tokens(
+        session,
+        user,
+        settings,
+        session_id=validated_session.id,
+        learning_session_id=learning_session.id,
+        is_guest=user.is_guest,
+    )
     refresh_token = auth_data.refreshToken
     if refresh_token is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to issue refresh token",
         )
-
-    # If a session cookie is present, refresh its expiry as well.
-    session_id = request.cookies.get(settings.session_cookie_name)
-    if session_id:
-        validation = await sessions.validate_session(session, session_id, settings)
-        if validation.user_session:
-            user_session = validation.user_session
-            set_session_cookie(response, user_session, settings)
-        if validation.mutated:
-            await session.flush()
 
     await session.commit()
     return RefreshResponse(
@@ -258,7 +292,11 @@ async def logout(
     settings: Settings = Depends(get_app_settings),
 ) -> None:
     """Invalidate a refresh token."""
+    refresh_record = None
     if payload.refreshToken:
+        refresh_record = await user_store.find_refresh_token(
+            session, payload.refreshToken
+        )
         await user_store.delete_refresh_token(session, payload.refreshToken)
     session_id = request.cookies.get(settings.session_cookie_name)
     if session_id:
@@ -269,6 +307,9 @@ async def logout(
             )
         clear_session_cookie(response, settings)
         request.state.skip_session_cookie_refresh = True
+    elif refresh_record:
+        await sessions.revoke_active_sessions(session, refresh_record.user_id)
+        await learning.end_latest_learning_session(session, refresh_record.user_id)
     await session.commit()
 
 

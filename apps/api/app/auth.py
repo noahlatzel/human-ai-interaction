@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
 from app.schema import AuthContext
-from app.services import security, user_store
+from app.services import security, sessions
 
 
 def _extract_bearer_token(header_value: str) -> str:
@@ -23,6 +23,11 @@ def _extract_bearer_token(header_value: str) -> str:
     return parts[1]
 
 
+def _unauthorized(detail: str) -> HTTPException:
+    """Return a 401 HTTPException with the provided detail."""
+    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
+
+
 async def _resolve_bearer_context(
     authorization: str,
     settings: Settings,
@@ -33,23 +38,38 @@ async def _resolve_bearer_context(
     try:
         payload = security.decode_access_token(token, settings)
     except (InvalidTokenError, jwt.PyJWTError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        ) from exc
+        raise _unauthorized("Invalid token") from exc
 
     user_id = payload.get("sub")
-    if not isinstance(user_id, str):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
-        )
+    session_id = payload.get("sid")
+    learning_session_id = payload.get("lsid")
 
-    user = await user_store.get_user_by_id(session, user_id)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
+    if not isinstance(user_id, str) or not isinstance(session_id, str):
+        raise _unauthorized("Invalid token payload")
 
-    return AuthContext(user=user, claims=payload)
+    validation = await sessions.validate_session(session, session_id, settings)
+    if not validation.user_session or not validation.user:
+        raise _unauthorized("Invalid or expired session")
+    if validation.user.id != user_id:
+        raise _unauthorized("Invalid token payload")
+
+    guest_claim = payload.get("guest")
+    if isinstance(guest_claim, bool) and guest_claim != bool(validation.user.is_guest):
+        raise _unauthorized("Invalid token payload")
+
+    if validation.mutated:
+        await session.flush()
+
+    active_learning_session_id = validation.user_session.learning_session_id
+    if active_learning_session_id is None and isinstance(learning_session_id, str):
+        active_learning_session_id = learning_session_id
+
+    return AuthContext(
+        user=validation.user,
+        claims=payload,
+        session_id=session_id,
+        learning_session_id=active_learning_session_id,
+    )
 
 
 async def _resolve_session_context(
@@ -59,22 +79,39 @@ async def _resolve_session_context(
     return getattr(request.state, "session_context", None)
 
 
+def _select_context(
+    bearer_context: AuthContext | None,
+    session_context: AuthContext | None,
+    *,
+    required: bool,
+) -> AuthContext | None:
+    """Choose between bearer and session contexts, enforcing mismatch rules."""
+    if bearer_context and session_context and bearer_context.uid != session_context.uid:
+        raise _unauthorized("Credential mismatch")
+    if bearer_context:
+        return bearer_context
+    if session_context:
+        return session_context
+    if required:
+        raise _unauthorized("Missing credentials")
+    return None
+
+
 async def get_current_user(
     request: Request,
     authorization: str | None = Header(default=None, alias="Authorization"),
     settings: Settings = Depends(get_app_settings),
     session: AsyncSession = Depends(get_db_session),
 ) -> AuthContext:
-    """Resolve the authenticated user from either session cookie or bearer token."""
-    session_context = await _resolve_session_context(request)
-    if session_context:
-        return session_context
+    """Resolve the authenticated user from either bearer token or session cookie."""
+    bearer_context: AuthContext | None = None
+    if authorization:
+        bearer_context = await _resolve_bearer_context(authorization, settings, session)
 
-    if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing credentials"
-        )
-    return await _resolve_bearer_context(authorization, settings, session)
+    session_context = await _resolve_session_context(request)
+    selected = _select_context(bearer_context, session_context, required=True)
+    assert selected is not None  # for type checkers
+    return selected
 
 
 async def get_optional_user(
@@ -84,16 +121,17 @@ async def get_optional_user(
     session: AsyncSession = Depends(get_db_session),
 ) -> AuthContext | None:
     """Return the current user if credentials are present and valid."""
-    session_context = await _resolve_session_context(request)
-    if session_context:
-        return session_context
-
+    bearer_context: AuthContext | None = None
     if authorization:
         try:
-            return await _resolve_bearer_context(authorization, settings, session)
+            bearer_context = await _resolve_bearer_context(
+                authorization, settings, session
+            )
         except HTTPException:
             return None
-    return None
+
+    session_context = await _resolve_session_context(request)
+    return _select_context(bearer_context, session_context, required=False)
 
 
 def require_roles(*roles: str):

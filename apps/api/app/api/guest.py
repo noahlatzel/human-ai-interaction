@@ -29,7 +29,15 @@ async def create_guest(
     user_session = await sessions.create_user_session(
         session, settings, user, learning_session
     )
-    tokens = await issue_tokens(session, user, settings, include_refresh=False)
+    tokens = await issue_tokens(
+        session,
+        user,
+        settings,
+        include_refresh=False,
+        session_id=user_session.id,
+        learning_session_id=learning_session.id,
+        is_guest=user.is_guest,
+    )
     set_session_cookie(response, user_session, settings)
     request.state.skip_session_cookie_refresh = True
     await session.commit()
