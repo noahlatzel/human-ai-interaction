@@ -10,6 +10,7 @@ import RegisterTeacherPage from '../features/auth/pages/RegisterTeacherPage';
 import TeacherLoginPage from '../features/auth/pages/TeacherLoginPage';
 import StudentDashboardPage from '../features/student/pages/StudentDashboardPage';
 import TeacherDashboardPage from '../features/teacher/pages/TeacherDashboardPage';
+import ProblemPage from '../features/problems/pages/ProblemPage';
 import App from './App';
 
 type RequireAuthProps = {
@@ -123,6 +124,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth allowGuest>
             <StudentDashboardPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: ROUTES.problem,
+        element: (
+          <RequireAuth allowGuest>
+            <ProblemPage />
           </RequireAuth>
         ),
       },

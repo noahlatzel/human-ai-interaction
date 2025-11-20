@@ -8,6 +8,11 @@ export interface MathWordProblem {
   operations: MathematicalOperation[];
 }
 
+export interface MathWordProblemWithMeta extends MathWordProblem {
+  difficultyLabel: string;
+  difficultyValue: number;
+}
+
 export interface MathWordProblemListResponse {
   problems: MathWordProblem[];
 }

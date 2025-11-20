@@ -6,6 +6,7 @@ export const ROUTES = {
   guest: '/guest',
   dashboard: '/dashboard',
   teacherDashboard: '/teacher-dashboard',
+  problem: '/tasks/:problemId',
   account: '/account',
   teacherAccount: '/teacher-account',
 };
@@ -16,3 +17,6 @@ export const getHomeRouteForRole = (role?: 'admin' | 'teacher' | 'student') => {
   if (role === 'teacher' || role === 'admin') return ROUTES.teacherDashboard;
   return ROUTES.dashboard;
 };
+
+export const getProblemRoute = (problemId: string) =>
+  ROUTES.problem.replace(':problemId', problemId);
