@@ -306,17 +306,17 @@
   justify-content: center;
   gap: 8px;
   padding: 14px 20px;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
 }
@@ -338,14 +338,14 @@
 }
 
 .tab-btn-new.tab-active {
-  background: rgba(156, 39, 176, 0.2);
-  border-color: rgba(156, 39, 176, 0.4);
-  color: #7B1FA2;
-  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.25);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #333;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .tab-btn-new:hover:not(.tab-active) {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.4);
   transform: translateY(-1px);
 }
 

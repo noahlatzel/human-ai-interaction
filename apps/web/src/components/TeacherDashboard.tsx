@@ -53,7 +53,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onLogout, onNavigat
     <div className="teacher-dashboard">
       {/* Top Bar */}
       <header className="teacher-top-bar">
-        <h1 className="teacher-dashboard-title">Teacher Dashboard</h1>
+        <h1 className="teacher-dashboard-title">Lehrer-Dashboard</h1>
         <div className="teacher-top-bar-icons">
           <button 
             className="teacher-icon-btn"
@@ -91,7 +91,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onLogout, onNavigat
         <div className="teacher-left-column">
           <div className="teacher-section-header">
             <h2 className="teacher-section-title">Klassenliste</h2>
-            <span className="teacher-success-rate-label">Success rate</span>
+            <span className="teacher-success-rate-label">Erfolgsrate</span>
           </div>
           <div className="teacher-student-list">
             {students.map((student) => {
@@ -131,7 +131,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onLogout, onNavigat
             className="teacher-action-btn teacher-add-student-btn"
             onClick={handleAddStudent}
           >
-            <span className="teacher-btn-text">Add</span>
+            <span className="teacher-btn-text">Hinzufügen</span>
             <span className="teacher-btn-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
@@ -144,7 +144,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onLogout, onNavigat
             className="teacher-action-btn teacher-add-problem-btn"
             onClick={handleAddMathProblem}
           >
-            <span className="teacher-btn-text">Add new Math Problem</span>
+            <span className="teacher-btn-text">Neue Matheaufgabe hinzufügen</span>
           </button>
         </div>
       </main>
