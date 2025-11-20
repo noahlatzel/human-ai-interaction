@@ -46,6 +46,7 @@ async def issue_tokens(
         user=UserPayload.from_model(user),
     )
 
+
 def set_session_cookie(
     response: Response, session_record: UserSession, settings: Settings
 ) -> None:

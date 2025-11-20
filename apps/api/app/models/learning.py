@@ -31,7 +31,9 @@ class LearningSession(Base):
     )
     ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
-    user: Mapped["User"] = relationship(back_populates="learning_sessions", lazy="joined")
+    user: Mapped["User"] = relationship(
+        back_populates="learning_sessions", lazy="joined"
+    )
     session: Mapped["UserSession"] = relationship(
         back_populates="learning_session", uselist=False, lazy="selectin"
     )

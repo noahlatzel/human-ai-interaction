@@ -7,7 +7,11 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import AuthContext, get_optional_user
+from app.auth import (
+    AuthContext,
+    _extract_bearer_token,
+    get_optional_user,
+)
 from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
 from app.services import learning, security, sessions, user_store
@@ -25,10 +29,68 @@ from .schemas.auth import (
 router = APIRouter()
 
 
+def _decode_bearer_claims(
+    authorization_header: str | None, settings: Settings
+) -> tuple[str | None, str | None]:
+    """Decode a bearer token into (role, sub) when present."""
+    if not authorization_header:
+        return None, None
+    try:
+        payload = security.decode_access_token(
+            _extract_bearer_token(authorization_header), settings
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        ) from exc
+    role = payload.get("role")
+    sub = payload.get("sub")
+    return (role if isinstance(role, str) else None, sub if isinstance(sub, str) else None)
+
+
+async def _resolve_registration_caller(
+    actor: AuthContext | None,
+    request: Request,
+    settings: Settings,
+) -> tuple[str | None, str | None, AuthContext | None]:
+    """Resolve caller role/id from middleware actor or bearer token claims."""
+    auth_header = request.headers.get("Authorization")
+    if auth_header:
+        role, sub = _decode_bearer_claims(auth_header, settings)
+        if actor and actor.uid == sub:
+            return actor.role, actor.uid, actor
+        return role, sub, None
+    if actor:
+        return actor.role, actor.uid, actor
+    return None, None, None
+
+
+async def _resolve_student_teacher_id(
+    session: AsyncSession,
+    candidate_teacher_id: str | None,
+    caller_role: str | None,
+    caller_id: str | None,
+) -> str:
+    """Return the teacher_id to persist for a student registration."""
+    if caller_role == "teacher" and caller_id:
+        return caller_id
+    if candidate_teacher_id:
+        teacher = await user_store.get_user_by_id(session, candidate_teacher_id)
+        if teacher is None or teacher.role != "teacher":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Teacher not found",
+            )
+        return candidate_teacher_id
+    return "solo-student"
+
+
 @router.post("/login", response_model=AuthSuccess)
 async def login(
     payload: LoginRequest,
     response: Response,
+    request: Request,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
 ) -> AuthSuccess:
@@ -49,6 +111,7 @@ async def login(
         session, user, settings, include_refresh=not user.is_guest
     )
     set_session_cookie(response, user_session, settings)
+    request.state.skip_session_cookie_refresh = True
     await session.commit()
     return tokens.model_copy(
         update={
@@ -64,12 +127,17 @@ async def login(
 async def register(
     payload: RegisterRequest,
     response: Response,
+    request: Request,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
     actor: AuthContext | None = Depends(get_optional_user),
 ) -> AuthSuccess:
     """Register a new teacher or student."""
-    if payload.role == "teacher" and (actor is None or actor.role != "admin"):
+    caller_role, caller_id, resolved_actor = await _resolve_registration_caller(
+        actor, request, settings
+    )
+
+    if payload.role == "teacher" and caller_role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     existing = await user_store.get_user_by_email(session, payload.email)
@@ -80,17 +148,12 @@ async def register(
 
     teacher_id = payload.teacher_id
     if payload.role == "student":
-        if actor and actor.role == "teacher":
-            teacher_id = actor.uid
+        if resolved_actor and resolved_actor.role == "teacher":
+            teacher_id = resolved_actor.uid
         else:
-            if teacher_id:
-                teacher = await user_store.get_user_by_id(session, teacher_id)
-                if teacher is None or teacher.role != "teacher":
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Teacher not found",
-                    )
-            teacher_id = teacher_id or "solo-student"
+            teacher_id = await _resolve_student_teacher_id(
+                session, teacher_id, caller_role, caller_id
+            )
 
     user = await user_store.create_user(
         session,
@@ -109,6 +172,7 @@ async def register(
     )
     tokens = await issue_tokens(session, user, settings)
     set_session_cookie(response, user_session, settings)
+    request.state.skip_session_cookie_refresh = True
     await session.commit()
     return tokens.model_copy(
         update={
@@ -197,7 +261,9 @@ async def logout(
     if session_id:
         user_session = await sessions.revoke_session_by_id(session, session_id)
         if user_session:
-            await learning.end_learning_session(session, user_session.learning_session_id)
+            await learning.end_learning_session(
+                session, user_session.learning_session_id
+            )
         clear_session_cookie(response, settings)
         request.state.skip_session_cookie_refresh = True
     await session.commit()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
@@ -19,6 +19,7 @@ router = APIRouter()
 async def create_guest(
     payload: GuestLoginRequest,
     response: Response,
+    request: Request,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
 ) -> AuthSuccess:
@@ -30,6 +31,7 @@ async def create_guest(
     )
     tokens = await issue_tokens(session, user, settings, include_refresh=False)
     set_session_cookie(response, user_session, settings)
+    request.state.skip_session_cookie_refresh = True
     await session.commit()
     return tokens.model_copy(
         update={

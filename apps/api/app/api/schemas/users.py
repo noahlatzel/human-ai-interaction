@@ -52,10 +52,21 @@ class UserCreateRequest(BaseModel):
     teacher_id: str | None = Field(default=None, alias="teacherId")
 
 
+class UserCreateResponse(BaseModel):
+    """Response returned when creating a user via privileged endpoint."""
+
+    user: UserPayload
+
+
 class UserListResponse(BaseModel):
     """Response envelope containing multiple users."""
 
     users: list[UserPayload]
 
 
-__all__ = ["UserPayload", "UserCreateRequest", "UserListResponse"]
+__all__ = [
+    "UserPayload",
+    "UserCreateRequest",
+    "UserCreateResponse",
+    "UserListResponse",
+]

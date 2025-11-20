@@ -23,7 +23,9 @@ async def session_middleware(request: Request, call_next) -> FastAPIResponse:
     if session_id:
         session_factory = request.app.state.db_session
         async with session_factory() as db_session:
-            validation = await sessions.validate_session(db_session, session_id, settings)
+            validation = await sessions.validate_session(
+                db_session, session_id, settings
+            )
             mutated = validation.mutated
             if validation.user_session and validation.user:
                 session_context = AuthContext(
