@@ -143,6 +143,7 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     )
 
     student_one_email = unique_email("stud1")
+    client.cookies.clear()
     student_one_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
@@ -152,6 +153,7 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     student_one_token = student_one_resp.json()["accessToken"]
 
     student_two_email = unique_email("stud2")
+    client.cookies.clear()
     student_two_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},

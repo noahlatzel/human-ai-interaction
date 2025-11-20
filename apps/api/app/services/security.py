@@ -39,14 +39,25 @@ def verify_password(
     return bcrypt.checkpw(raw_password.encode("utf-8"), hashed_bytes)
 
 
-def create_access_token(user: User, settings: Settings) -> tuple[str, datetime]:
+def create_access_token(
+    user: User,
+    settings: Settings,
+    *,
+    session_id: str | None = None,
+    learning_session_id: str | None = None,
+    is_guest: bool | None = None,
+) -> tuple[str, datetime]:
     """Return a signed JWT access token and its expiry timestamp."""
     now = datetime.now(UTC)
     expires = now + timedelta(minutes=settings.jwt_exp_minutes)
+    guest_flag = user.is_guest if is_guest is None else is_guest
     payload: dict[str, Any] = {
         "sub": user.id,
         "role": user.role,
         "type": "access",
+        "sid": session_id,
+        "lsid": learning_session_id,
+        "guest": guest_flag,
         "iat": int(now.timestamp()),
         "exp": int(expires.timestamp()),
         "jti": secrets.token_urlsafe(8),

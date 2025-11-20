@@ -111,6 +111,7 @@ def test_register_student_with_specific_teacher(client: TestClient) -> None:
     assert teacher_resp.status_code == 201
     teacher_id = teacher_resp.json()["user"]["id"]
 
+    client.cookies.clear()
     student_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
@@ -153,6 +154,7 @@ def test_register_conflict_returns_409(client: TestClient) -> None:
         },
     )
     assert first.status_code == 201
+    client.cookies.clear()
     duplicate = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
