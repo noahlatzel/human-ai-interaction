@@ -46,7 +46,10 @@ def _decode_bearer_claims(
         ) from exc
     role = payload.get("role")
     sub = payload.get("sub")
-    return (role if isinstance(role, str) else None, sub if isinstance(sub, str) else None)
+    return (
+        role if isinstance(role, str) else None,
+        sub if isinstance(sub, str) else None,
+    )
 
 
 async def _resolve_registration_caller(
