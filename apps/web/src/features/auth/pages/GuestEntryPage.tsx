@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES, getHomeRouteForRole } from '../../../lib/routes';
 import type { GuestLoginRequest } from '../../../types/auth';
+import AuthLayout from '../components/AuthLayout';
 import { useAuth } from '../hooks/useAuth';
 
 type GuestFormValues = GuestLoginRequest;
@@ -24,65 +25,64 @@ export default function GuestEntryPage() {
   const onSubmit = async (values: GuestFormValues) => {
     try {
       const user = await guestLogin(values);
-      toast.success('Guest session started');
+      toast.success('Gast-Sitzung gestartet');
       navigate(getHomeRouteForRole(user.role), { replace: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not start guest session';
+      const message = error instanceof Error ? error.message : 'Gast-Anmeldung fehlgeschlagen';
       toast.error(message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 bg-white rounded-2xl shadow-lg p-8">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">Continue as guest</h1>
-          <p className="text-sm text-slate-500">
-            Enter your first name to try the experience without creating an account.
+    <AuthLayout
+      title="Als Gast fortfahren"
+      subtitle="Gib deinen Vornamen ein, um die App ohne Registrierung auszuprobieren."
+      badge="Gastmodus"
+      footnote={
+        <>
+          <p>
+            Bereit für ein Konto?{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.registerStudent}>
+              Jetzt registrieren
+            </Link>
+            .
           </p>
-          {state.error && (
-            <p className="text-xs text-rose-600">Last error: {state.error}</p>
-          )}
+          <p>
+            Zurück zum{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.login}>
+              Login
+            </Link>
+            .
+          </p>
+        </>
+      }
+    >
+      {state.error ? (
+        <div className="text-center text-xs font-medium text-rose-600 bg-rose-50 border border-rose-100 rounded-xl py-2 px-3">
+          Letzter Fehler: {state.error}
         </div>
+      ) : null}
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">First name</span>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Alex"
-              disabled={isLoading}
-              {...register('firstName', { required: true })}
-            />
-          </label>
-
-          <button
-            type="submit"
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">Vorname</span>
+          <input
+            type="text"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="Alex"
             disabled={isLoading}
-            className="w-full rounded-lg bg-indigo-600 text-white py-2 font-semibold hover:bg-indigo-700 transition disabled:opacity-60"
-          >
-            {isLoading ? 'Starting session...' : 'Continue'}
-          </button>
-        </form>
+            {...register('firstName', { required: true })}
+          />
+        </label>
 
-        <div className="text-center text-sm text-slate-600 space-y-2">
-          <p>
-            Ready to create an account?{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.registerStudent}>
-              Register here
-            </Link>
-            .
-          </p>
-          <p>
-            Back to{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.login}>
-              login
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center py-4 mt-2 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-green-700 hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? 'Starte Sitzung...' : 'Weiter als Gast'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

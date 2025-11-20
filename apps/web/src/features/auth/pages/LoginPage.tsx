@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES, getHomeRouteForRole } from '../../../lib/routes';
 import type { LoginRequest } from '../../../types/auth';
+import AuthLayout from '../components/AuthLayout';
 import { useAuth } from '../hooks/useAuth';
 
 type LoginFormValues = LoginRequest;
@@ -25,10 +26,10 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       const user = await login(values);
-      toast.success('Successfully logged in');
+      toast.success('Erfolgreich angemeldet');
       navigate(getHomeRouteForRole(user.role), { replace: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed';
+      const message = error instanceof Error ? error.message : 'Login fehlgeschlagen';
       toast.error(message);
     }
   };
@@ -36,80 +37,82 @@ export default function LoginPage() {
   const showLogoutNotice = searchParams.get('loggedOut') === '1';
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 bg-white rounded-2xl shadow-lg p-8">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">Welcome back</h1>
-          <p className="text-sm text-slate-500">Sign in to continue your session.</p>
-          {showLogoutNotice && (
-            <p className="text-xs text-emerald-600">You have been logged out successfully.</p>
-          )}
-          {state.error && (
-            <p className="text-xs text-rose-600">Last error: {state.error}</p>
-          )}
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">Email</span>
-            <input
-              type="email"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="you@example.com"
-              disabled={isLoading}
-              autoComplete="email"
-              {...register('email', { required: true })}
-            />
-          </label>
-
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">Password</span>
-            <input
-              type="password"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-              disabled={isLoading}
-              autoComplete="current-password"
-              {...register('password', { required: true })}
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-lg bg-blue-600 text-white py-2 font-semibold hover:bg-blue-700 transition disabled:opacity-60"
-          >
-            {isLoading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-
-        <div className="space-y-2 text-center text-sm text-slate-600">
-          <p>
-            New here?{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.registerStudent}>
-              Register as student
+    <AuthLayout
+      title="Willkommen zurück"
+      subtitle="Melde dich mit deiner E-Mail und deinem Passwort an."
+      footnote={
+        <>
+          <p className="text-sm text-slate-600">
+            Neu hier?{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.registerStudent}>
+              Als Schüler:in registrieren
             </Link>{' '}
-            or{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.registerTeacher}>
-              register as teacher
+            oder{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.registerTeacher}>
+              als Lehrer:in registrieren
             </Link>
             .
           </p>
-          <p>
-            Want to explore quickly?{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.guest}>
-              Continue as guest
+          <p className="text-sm text-slate-600">
+            Schnell testen?{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.guest}>
+              Als Gast fortfahren
             </Link>
             .
           </p>
-          <p>
-            Teacher sign in:{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.teacherLogin}>
-              Teacher login
+          <p className="text-sm text-slate-600">
+            Lehrer-Login:{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.teacherLogin}>
+              Zum Lehrer-Login
             </Link>
           </p>
+        </>
+      }
+    >
+      {showLogoutNotice ? (
+        <div className="text-center text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-xl py-2 px-3">
+          Du wurdest erfolgreich abgemeldet.
         </div>
-      </div>
-    </div>
+      ) : null}
+      {state.error ? (
+        <div className="text-center text-xs font-medium text-rose-600 bg-rose-50 border border-rose-100 rounded-xl py-2 px-3">
+          Letzter Fehler: {state.error}
+        </div>
+      ) : null}
+
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">E-Mail</span>
+          <input
+            type="email"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="name@beispiel.de"
+            disabled={isLoading}
+            autoComplete="email"
+            {...register('email', { required: true })}
+          />
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">Passwort</span>
+          <input
+            type="password"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="••••••••"
+            disabled={isLoading}
+            autoComplete="current-password"
+            {...register('password', { required: true })}
+          />
+        </label>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center py-4 mt-2 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-green-700 hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? 'Anmeldung läuft...' : 'Anmelden'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

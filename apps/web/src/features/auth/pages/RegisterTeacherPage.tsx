@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES, getHomeRouteForRole } from '../../../lib/routes';
 import type { RegisterRequest } from '../../../types/auth';
+import AuthLayout from '../components/AuthLayout';
 import { useAuth } from '../hooks/useAuth';
 
 type RegisterFormValues = Omit<RegisterRequest, 'role'>;
@@ -30,98 +31,97 @@ export default function RegisterTeacherPage() {
         lastName: values.lastName || null,
       };
       const user = await registerTeacher(sanitized);
-      toast.success('Teacher account created');
+      toast.success('Lehrkraft-Konto erstellt');
       navigate(getHomeRouteForRole(user.role), { replace: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Registration failed';
+      const message = error instanceof Error ? error.message : 'Registrierung fehlgeschlagen';
       toast.error(message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 bg-white rounded-2xl shadow-lg p-8">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">Register as teacher</h1>
-          <p className="text-sm text-slate-500">
-            Teachers need approval/admin context on the backend; use your institution account.
+    <AuthLayout
+      title="Als Lehrer:in registrieren"
+      subtitle="Verwende deine Schul- oder Admin-Zugangsdaten, falls benötigt."
+      badge="Lehrer"
+      footnote={
+        <>
+          <p>
+            Schon registriert?{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.teacherLogin}>
+              Zum Lehrer-Login
+            </Link>
+            .
           </p>
-          {state.error && (
-            <p className="text-xs text-rose-600">Last error: {state.error}</p>
-          )}
+          <p>
+            Bist du Schüler:in?{' '}
+            <Link className="font-semibold text-blue-600 hover:text-blue-700" to={ROUTES.registerStudent}>
+              Hier registrieren
+            </Link>
+            .
+          </p>
+        </>
+      }
+    >
+      {state.error ? (
+        <div className="text-center text-xs font-medium text-rose-600 bg-rose-50 border border-rose-100 rounded-xl py-2 px-3">
+          Letzter Fehler: {state.error}
         </div>
+      ) : null}
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">First name (optional)</span>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="First name"
-              disabled={isLoading}
-              {...register('firstName')}
-            />
-          </label>
-
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">Last name (optional)</span>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Last name"
-              disabled={isLoading}
-              {...register('lastName')}
-            />
-          </label>
-
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">Email</span>
-            <input
-              type="email"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="teacher@school.edu"
-              disabled={isLoading}
-              {...register('email', { required: true })}
-            />
-          </label>
-
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">Password</span>
-            <input
-              type="password"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-              disabled={isLoading}
-              {...register('password', { required: true })}
-            />
-          </label>
-
-          <button
-            type="submit"
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">Vorname (optional)</span>
+          <input
+            type="text"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="Alex"
             disabled={isLoading}
-            className="w-full rounded-lg bg-blue-600 text-white py-2 font-semibold hover:bg-blue-700 transition disabled:opacity-60"
-          >
-            {isLoading ? 'Creating account...' : 'Register'}
-          </button>
-        </form>
+            {...register('firstName')}
+          />
+        </label>
 
-        <div className="text-center text-sm text-slate-600 space-y-2">
-          <p>
-            Already have an account?{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.teacherLogin}>
-              Sign in
-            </Link>
-            .
-          </p>
-          <p>
-            Student?{' '}
-            <Link className="text-blue-600 hover:text-blue-700" to={ROUTES.registerStudent}>
-              Register as student
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    </div>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">Nachname (optional)</span>
+          <input
+            type="text"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="Mustermann"
+            disabled={isLoading}
+            {...register('lastName')}
+          />
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">E-Mail</span>
+          <input
+            type="email"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="lehrer@schule.de"
+            disabled={isLoading}
+            {...register('email', { required: true })}
+          />
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">Passwort</span>
+          <input
+            type="password"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            placeholder="••••••••"
+            disabled={isLoading}
+            {...register('password', { required: true })}
+          />
+        </label>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center py-4 mt-2 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-green-700 hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? 'Erstelle Konto...' : 'Registrieren'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
