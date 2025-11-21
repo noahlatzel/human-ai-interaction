@@ -1,3 +1,13 @@
+# Tech Stack – Überblick
+
+**Backend:** Python (FastAPI, eigene Auth/Sessions, Modelle in `apps/api`)
+
+**Frontend:** React + TypeScript (Vite, Tailwind CSS, PostCSS, ESLint) – Code in `apps/web`
+
+**Testing:** Pytest für Backend (`apps/api/tests`)
+
+**Package Management:** Python: `pyproject.toml` | Frontend: `package.json`
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

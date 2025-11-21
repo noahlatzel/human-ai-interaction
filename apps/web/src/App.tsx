@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
+import TeacherDashboard from './components/TeacherDashboard';
+import StudentDashboard from './components/StudentDashboard';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,7 +40,6 @@ function App() {
           },
         }}
       />
-
       <Routes>
         <Route
           path="/login"
@@ -73,6 +74,9 @@ function App() {
             )
           }
         />
+        {/* Dev routes: show dashboards without auth for local development */}
+        <Route path="/dev-dashboard" element={<TeacherDashboard />} />
+        <Route path="/dev-student" element={<StudentDashboard />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

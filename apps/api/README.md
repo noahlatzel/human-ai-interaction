@@ -13,6 +13,17 @@ or
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
 ```
 
+## Environment Configuration
+
+Runtime configuration is handled via environment variables prefixed with `HAI_`. Copy the provided template and adjust values for your environment:
+
+```sh
+cp .env.template .env
+# edit .env to set secrets like HAI_JWT_SECRET, admin credentials, DB URL, etc.
+```
+
+The app loads `.env` automatically (see `app/config.py`), so `uv run main.py` and all tests will pick up your configuration without extra flags.
+
 ## Adding Dependencies
 After installing `uv`, you can install the dependencies using `uv sync` and are good to go.
 

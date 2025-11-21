@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import type { LoginFormData } from '../types/auth';
 import { loginUser, storeAuthToken } from '../services/auth';
-import logo from '../assets/login2.webp';
+import loginVideo from '../assets/login_view4.mp4';
 
 interface LoginProps {
     onLoginSuccess?: () => void;
@@ -79,7 +80,17 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 {/* Branding Header - Always Visible */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-24 h-24 mb-4 shadow-lg rounded-3xl overflow-hidden">
-                        <img src={logo} alt="MathApp Logo" className="w-full h-full object-cover" />
+                        <video
+                            src={loginVideo}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                            aria-label="MathApp Logo Animation"
+                        >
+                            Dein Browser unterstützt dieses Video nicht.
+                        </video>
                     </div>
                     <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">MathApp</h1>
                     <p className="mt-2 text-sm text-slate-500">Lerne Mathematik auf eine neue Art</p>
@@ -364,6 +375,19 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                         </a>
                                     </p>
                                 </div>
+
+                                {import.meta.env.DEV && (
+                                    <div className="pt-3 text-center">
+                                        <div className="flex flex-col gap-2">
+                                            <Link to="/dev-dashboard" className="text-sm font-medium text-blue-600 hover:underline">
+                                                View Teacher Dashboard (dev)
+                                            </Link>
+                                            <Link to="/dev-student" className="text-sm font-medium text-blue-600 hover:underline">
+                                                View Student Dashboard (dev)
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
                             </form>
                         ) : (
                             <div className="space-y-4 mt-4">
@@ -386,6 +410,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                                 >
                                     Anmelden
                                 </button>
+                                <div className="text-center mt-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsGuestMode(false)}
+                                        className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                                    >
+                                        ← Zurück zum Login
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
