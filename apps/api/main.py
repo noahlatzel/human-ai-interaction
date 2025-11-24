@@ -4,6 +4,7 @@ import uvicorn
 
 from app.config import get_settings
 
+
 def main() -> None:
     settings = get_settings()
     uvicorn.run(
