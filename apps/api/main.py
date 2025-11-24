@@ -2,9 +2,19 @@ from __future__ import annotations
 
 import uvicorn
 
+from app.config import get_settings
 
 def main() -> None:
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    settings = get_settings()
+    uvicorn.run(
+        "app:app",
+        host=settings.api_host,
+        port=settings.api_port,
+        reload=settings.reload,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+        root_path=settings.root_path,
+    )
 
 
 if __name__ == "__main__":

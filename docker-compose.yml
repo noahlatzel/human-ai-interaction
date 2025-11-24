@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  api:
+    build: ./apps/api
+    env_file:
+      - ./apps/api/.env
+    environment:
+      HAII_ROOT_PATH: /haii/api
+      HAII_API_HOST: 0.0.0.0
+      HAII_API_PORT: 8000
+      HAII_SQLITE_URL: sqlite+aiosqlite:///data/auth.db
+      HAII_ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+      UV_PYTHON_PREFERENCE: system
+    volumes:
+      - api_data:/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_BASE_PATH: /haii/
+        VITE_API_BASE_URL: /haii/api
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  api_data:

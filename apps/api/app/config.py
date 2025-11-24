@@ -32,6 +32,22 @@ class Settings(BaseSettings):
         default="sqlite+aiosqlite:///./auth.db",
         description="SQLAlchemy compatible SQLite connection string.",
     )
+    api_host: str = Field(
+        default="0.0.0.0",
+        description="Host interface uvicorn should bind to.",
+    )
+    api_port: int = Field(
+        default=8000,
+        description="Port uvicorn should listen on.",
+    )
+    root_path: str = Field(
+        default="",
+        description="ASGI root_path for deployments behind a subpath (e.g. /haii/api).",
+    )
+    reload: bool = Field(
+        default=False,
+        description="Enable auto-reload (development only).",
+    )
 
     environment: str = Field(
         default="development",
