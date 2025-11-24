@@ -13,6 +13,12 @@ import TeacherDashboardPage from '../features/teacher/pages/TeacherDashboardPage
 import ProblemPage from '../features/problems/pages/ProblemPage';
 import App from './App';
 
+const rawBasename = import.meta.env.BASE_URL ?? '/';
+const basename =
+  rawBasename !== '/' && rawBasename.endsWith('/')
+    ? rawBasename.slice(0, -1)
+    : rawBasename;
+
 type RequireAuthProps = {
   children: ReactNode;
   allowedRoles?: Array<'admin' | 'teacher' | 'student'>;
@@ -149,6 +155,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename });
 
 export default router;

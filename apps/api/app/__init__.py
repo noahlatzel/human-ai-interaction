@@ -38,7 +38,11 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
 def create_app() -> FastAPI:
     """Instantiate the FastAPI app."""
     settings = get_settings()
-    app = FastAPI(title="Human-AI Interaction Backend", lifespan=lifespan)
+    app = FastAPI(
+        title="Human-AI Interaction Backend",
+        lifespan=lifespan,
+        root_path=settings.root_path,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
