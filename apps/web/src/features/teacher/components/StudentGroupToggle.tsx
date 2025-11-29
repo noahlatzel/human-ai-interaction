@@ -11,12 +11,14 @@ export default function StudentGroupToggle({ value, onToggle }: StudentGroupTogg
       <button
         type="button"
         onClick={onToggle}
-        className="relative inline-flex h-7 w-16 items-center rounded-full bg-blue-100 border border-blue-200 transition hover:bg-blue-200"
+        className={`relative inline-flex h-7 w-16 items-center rounded-full transition ${
+          isA ? 'bg-blue-100 border border-blue-200 hover:bg-blue-200' : 'bg-white border border-blue-400 hover:bg-blue-50'
+        }`}
         aria-label="Gruppe umschalten"
       >
         <span
-          className={`absolute left-1 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            isA ? 'translate-x-0' : 'translate-x-9'
+          className={`absolute left-1 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full shadow transition-transform ${
+            isA ? 'translate-x-0 bg-white' : 'translate-x-9 bg-blue-600'
           }`}
           aria-hidden
         />
