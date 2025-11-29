@@ -87,7 +87,7 @@ export default function CreateStudentForm({ onSubmit, onCancel, isSubmitting }: 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 text-white text-sm font-semibold shadow hover:from-blue-700 hover:to-green-700 disabled:opacity-60"
+          className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 disabled:opacity-60"
         >
           {isSubmitting ? 'Wird erstellt...' : 'Anlegen'}
         </button>

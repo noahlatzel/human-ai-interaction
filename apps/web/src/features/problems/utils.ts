@@ -1,4 +1,4 @@
-import type { MathematicalOperation } from '../../types/problem';
+import type { DifficultyLevel, MathematicalOperation } from '../../types/problem';
 
 export const ALLOWED_OPERATIONS: MathematicalOperation[] = [
   'addition',
@@ -21,13 +21,14 @@ export const mapOperations = (ops: string[]): MathematicalOperation[] =>
 
 export const formatOperation = (op: MathematicalOperation) => OPERATION_LABELS[op];
 
-export const clampDifficulty = (difficulty: number) => Math.min(5, Math.max(1, difficulty));
-
-export const getDifficultyMeta = (difficulty: number) => {
-  const value = clampDifficulty(difficulty);
-  if (value < 1.8) return { value, label: 'Sehr leicht', tone: 'green' as const };
-  if (value < 2.6) return { value, label: 'Leicht', tone: 'green' as const };
-  if (value < 3.4) return { value, label: 'Mittel', tone: 'amber' as const };
-  if (value < 4.3) return { value, label: 'Knifflig', tone: 'orange' as const };
-  return { value, label: 'Sehr knifflig', tone: 'rose' as const };
+const DIFFICULTY_META: Record<
+  DifficultyLevel,
+  { value: number; label: string; tone: 'green' | 'amber' | 'rose' }
+> = {
+  einfach: { value: 1, label: 'Einfach', tone: 'green' },
+  mittel: { value: 2, label: 'Mittel', tone: 'amber' },
+  schwierig: { value: 3, label: 'Schwierig', tone: 'rose' },
 };
+
+export const getDifficultyMeta = (difficulty: DifficultyLevel) =>
+  DIFFICULTY_META[difficulty] ?? DIFFICULTY_META.mittel;
