@@ -20,9 +20,15 @@ from app.models import (
 def _normalize_difficulty(difficulty: DifficultyLevel | str) -> DifficultyLevel:
     """Return a valid DifficultyLevel."""
     try:
-        return difficulty if isinstance(difficulty, DifficultyLevel) else DifficultyLevel(difficulty)
+        return (
+            difficulty
+            if isinstance(difficulty, DifficultyLevel)
+            else DifficultyLevel(difficulty)
+        )
     except ValueError as exc:
-        raise ValueError("Difficulty must be one of: einfach, mittel, schwierig.") from exc
+        raise ValueError(
+            "Difficulty must be one of: einfach, mittel, schwierig."
+        ) from exc
 
 
 def _normalize_operations(
@@ -137,8 +143,12 @@ async def list_problems(
             DifficultyLevel.MITTEL: 2,
             DifficultyLevel.SCHWIERIG: 3,
         }
-        order_expr = case(order_map, value=MathWordProblem.difficulty, else_=len(order_map) + 1)
-        stmt = stmt.order_by(order_expr.asc() if difficulty_order == "asc" else order_expr.desc())
+        order_expr = case(
+            order_map, value=MathWordProblem.difficulty, else_=len(order_map) + 1
+        )
+        stmt = stmt.order_by(
+            order_expr.asc() if difficulty_order == "asc" else order_expr.desc()
+        )
 
     result = await session.execute(stmt)
     return list(result.scalars().unique().all())
