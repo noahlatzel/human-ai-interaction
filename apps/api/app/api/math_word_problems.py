@@ -39,6 +39,7 @@ async def create_math_word_problem(
             solution=payload.solution,
             difficulty=payload.difficulty,
             operations=payload.operations,
+            hints=payload.hints,
         )
     except ValueError as exc:
         raise HTTPException(
