@@ -5,17 +5,7 @@ from __future__ import annotations
 import enum
 from datetime import datetime
 
-from sqlalchemy import (
-    CheckConstraint,
-    DateTime,
-    Enum,
-    Float,
-    ForeignKey,
-    Index,
-    String,
-    Text,
-    UniqueConstraint,
-)
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, utcnow
@@ -30,23 +20,36 @@ class MathematicalOperation(str, enum.Enum):
     DIVISION = "division"
 
 
+class DifficultyLevel(str, enum.Enum):
+    """Discrete difficulty levels for math word problems."""
+
+    EINFACH = "einfach"
+    MITTEL = "mittel"
+    SCHWIERIG = "schwierig"
+
+
 class MathWordProblem(Base):
     """Persisted mathematical word problem with associated operations."""
 
     __tablename__ = "math_word_problems"
-    __table_args__ = (
-        CheckConstraint(
-            "difficulty >= 1.0 AND difficulty <= 5.0",
-            name="ck_math_word_problems_difficulty_range",
-        ),
-    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     problem_description: Mapped[str] = mapped_column(
         "problem_description", Text, nullable=False
     )
     solution: Mapped[str] = mapped_column(Text, nullable=False)
-    difficulty: Mapped[float] = mapped_column(Float, nullable=False)
+    difficulty: Mapped[DifficultyLevel] = mapped_column(
+        Enum(
+            DifficultyLevel,
+            native_enum=False,
+            validate_strings=True,
+            values_callable=lambda enum: [choice.value for choice in enum],
+        ),
+        nullable=False,
+    )
+    hint1: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hint2: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hint3: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False
     )
@@ -86,7 +89,12 @@ class MathWordProblemOperation(Base):
         index=True,
     )
     operation: Mapped[MathematicalOperation] = mapped_column(
-        Enum(MathematicalOperation, native_enum=False, validate_strings=True),
+        Enum(
+            MathematicalOperation,
+            native_enum=False,
+            validate_strings=True,
+            values_callable=lambda enum: [choice.value for choice in enum],
+        ),
         nullable=False,
     )
 
@@ -97,4 +105,5 @@ __all__ = [
     "MathWordProblem",
     "MathWordProblemOperation",
     "MathematicalOperation",
+    "DifficultyLevel",
 ]

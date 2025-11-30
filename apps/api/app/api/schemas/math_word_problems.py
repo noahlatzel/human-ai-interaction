@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import MathWordProblem, MathematicalOperation
+from app.models import DifficultyLevel, MathWordProblem, MathematicalOperation
 
 
 class MathWordProblemCreate(BaseModel):
@@ -18,7 +18,12 @@ class MathWordProblemCreate(BaseModel):
         min_length=1,
     )
     solution: str = Field(min_length=1)
-    difficulty: float = Field(ge=1.0, le=5.0)
+    difficulty: DifficultyLevel
+    hints: list[str | None] | None = Field(
+        default=None,
+        max_length=3,
+        description="Optional hints (max 3); blanks/nulls ignored and stored as null",
+    )
     operations: list[MathematicalOperation] = Field(min_length=1)
 
 
@@ -33,8 +38,9 @@ class MathWordProblemPayload(BaseModel):
         serialization_alias="problemDescription",
     )
     solution: str
-    difficulty: float
+    difficulty: DifficultyLevel
     operations: list[MathematicalOperation]
+    hints: list[str | None]
 
     @classmethod
     def from_model(cls, problem: MathWordProblem) -> "MathWordProblemPayload":
@@ -45,6 +51,7 @@ class MathWordProblemPayload(BaseModel):
             solution=problem.solution,
             difficulty=problem.difficulty,
             operations=[operation.operation for operation in problem.operations],
+            hints=[problem.hint1, problem.hint2, problem.hint3],
         )
 
 

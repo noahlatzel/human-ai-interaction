@@ -35,7 +35,7 @@ def create_problem(
     *,
     problem_description: str = "Sample problem",
     solution: str = "42",
-    difficulty: float = 2.5,
+    difficulty: str = "mittel",
     operations: list[str] | None = None,
 ) -> dict[str, Any]:
     """Helper to create a math word problem."""
@@ -69,7 +69,7 @@ def test_create_requires_teacher_or_admin(client: TestClient) -> None:
         json={
             "problemDescription": "Add two numbers.",
             "solution": "2",
-            "difficulty": 1.5,
+            "difficulty": "einfach",
             "operations": ["addition"],
         },
     )
@@ -87,7 +87,7 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
         teacher_tokens["accessToken"],
         problem_description="Add and subtract.",
         solution="0",
-        difficulty=2.5,
+        difficulty="mittel",
         operations=["addition", "subtraction"],
     )
     second = create_problem(
@@ -95,7 +95,7 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
         teacher_tokens["accessToken"],
         problem_description="Add and multiply.",
         solution="0",
-        difficulty=4.0,
+        difficulty="schwierig",
         operations=["addition", "multiplication"],
     )
     third = create_problem(
@@ -103,7 +103,7 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
         teacher_tokens["accessToken"],
         problem_description="Subtract then add.",
         solution="0",
-        difficulty=1.0,
+        difficulty="einfach",
         operations=["subtraction", "addition"],
     )
 
@@ -119,7 +119,7 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
     sort_resp = client.get("/v1/math-problems", params={"difficultyOrder": "desc"})
     assert sort_resp.status_code == 200
     difficulties = [item["difficulty"] for item in sort_resp.json()["problems"]]
-    assert difficulties == sorted(difficulties, reverse=True)
+    assert difficulties == ["schwierig", "mittel", "einfach"]
 
 
 def test_admin_can_delete_problem(client: TestClient) -> None:
@@ -130,7 +130,7 @@ def test_admin_can_delete_problem(client: TestClient) -> None:
         admin_tokens["accessToken"],
         problem_description="Delete me",
         solution="N/A",
-        difficulty=3.0,
+        difficulty="mittel",
         operations=["division"],
     )
 
@@ -155,7 +155,7 @@ def test_invalid_difficulty_rejected(client: TestClient) -> None:
         json={
             "problemDescription": "Too hard?",
             "solution": "N/A",
-            "difficulty": 6.0,
+            "difficulty": "unmoeglich",
             "operations": ["addition"],
         },
     )
