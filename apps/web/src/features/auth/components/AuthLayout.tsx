@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import logo from '../../../assets/applicationIcon.webp';
+import forestBackground from '../../../assets/forestBackground.png';
 
 type AuthLayoutProps = {
   title: string;
@@ -11,8 +12,13 @@ type AuthLayoutProps = {
 
 export default function AuthLayout({ title, subtitle, children, footnote, badge }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center py-10 px-4">
-      <div className="relative bg-white/80 backdrop-blur-xl rounded-[32px] shadow-[0_8px_40px_rgba(59,130,246,0.12)] p-8 sm:p-10 md:p-12 max-w-md w-full border border-blue-100/50">
+    <div
+      className="min-h-screen flex items-center justify-center py-10 px-4 bg-cover bg-center"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.6)), url(${forestBackground})`,
+      }}
+    >
+      <div className="relative bg-white/90 backdrop-blur-xl rounded-[32px] shadow-[0_8px_40px_rgba(59,130,246,0.12)] p-8 sm:p-10 md:p-12 max-w-md w-full border border-blue-100/50">
         <div className="text-center mb-8 space-y-2">
           <div className="inline-flex items-center justify-center w-20 h-20 shadow-lg rounded-3xl overflow-hidden">
             <img src={logo} alt="MathApp Logo" className="w-full h-full object-cover" />

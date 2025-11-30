@@ -28,7 +28,7 @@ export default function StudentLayout({
     <div
       className="min-h-screen relative overflow-hidden"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.75), rgba(255,255,255,0.9)), url(${forestBackground})`,
+        backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.6)), url(${forestBackground})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}

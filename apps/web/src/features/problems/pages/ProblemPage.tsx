@@ -104,7 +104,7 @@ export default function ProblemPage() {
     <div
       className="min-h-screen relative overflow-hidden"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url(${forestBackground})`,
+        backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.6)), url(${forestBackground})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -126,7 +126,15 @@ export default function ProblemPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
+            <button
+              type="button"
+              onClick={() => toast.success('Lehrer wurde gerufen!')}
+              className="absolute -right-16 top-0 w-14 h-14 rounded-full bg-amber-100 border-2 border-amber-500 text-amber-600 font-bold text-2xl flex items-center justify-center hover:bg-amber-200 hover:scale-105 transition shadow-lg z-20"
+              title="Lehrer rufen"
+            >
+              ?
+            </button>
             <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-5 space-y-4">
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-slate-900">Dein Rechenweg (Skizze)</h2>
@@ -144,9 +152,9 @@ export default function ProblemPage() {
         </div>
       </div>
 
-      <div className="fixed left-4 bottom-4 z-20">
-        <div className="rounded-2xl bg-white/95 border border-emerald-100 shadow-xl p-4 max-w-[15rem] flex gap-3 items-center">
-          <img src={companion} alt="Begleiter" className="w-16 h-16 object-contain drop-shadow" />
+      <div className="fixed left-4 bottom-4 z-20 flex items-end">
+        <div className="relative rounded-2xl bg-white/95 border border-emerald-100 shadow-xl p-4 max-w-[15rem] mb-48 -mr-20 z-10">
+          <div className="absolute -right-2 bottom-6 w-4 h-4 bg-white/95 border-r border-b border-emerald-100 transform -rotate-45"></div>
           <div className="space-y-1">
             <p className="text-sm font-semibold text-emerald-700">Brauchst du Hilfe?</p>
             <p className="text-sm text-slate-600">
@@ -154,6 +162,7 @@ export default function ProblemPage() {
             </p>
           </div>
         </div>
+        <img src={companion} alt="Begleiter" className="w-80 h-80 object-contain drop-shadow-lg relative z-0" />
       </div>
     </div>
   );

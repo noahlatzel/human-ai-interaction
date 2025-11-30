@@ -8,6 +8,7 @@ export default function ScratchPadCanvas({ onChange }: ScratchPadCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -46,6 +47,7 @@ export default function ScratchPadCanvas({ onChange }: ScratchPadCanvasProps) {
 
   const startDrawing = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
+    setHasContent(true);
     const ctx = contextRef.current;
     if (!ctx) return;
     const { x, y } = getPosition(event);
@@ -77,6 +79,7 @@ export default function ScratchPadCanvas({ onChange }: ScratchPadCanvasProps) {
     if (!canvas || !ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     onChange?.(null);
+    setHasContent(false);
   };
 
   return (
@@ -102,9 +105,11 @@ export default function ScratchPadCanvas({ onChange }: ScratchPadCanvasProps) {
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div className="text-slate-400 text-sm font-medium">Zeichne hier deine Lösung</div>
-        </div>
+        {!hasContent && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="text-slate-400 text-sm font-medium">Zeichne hier deine Lösung</div>
+          </div>
+        )}
       </div>
     </div>
   );
