@@ -27,7 +27,7 @@ def create_problem(
     *,
     description: str = "Sample problem",
     solution: str = "42",
-    difficulty: float = 2.0,
+    difficulty: str = "mittel",
 ) -> dict[str, Any]:
     """Create a math word problem using an authorized token."""
     response = client.post(

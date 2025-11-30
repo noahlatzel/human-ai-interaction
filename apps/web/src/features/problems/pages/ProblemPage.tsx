@@ -39,10 +39,11 @@ export default function ProblemPage() {
     }
   }, [loading, navigate, notFound]);
 
-  const hint = useMemo(
-    () => 'Wenn du feststeckst, versuche den Aufgabentext zu markieren und die wichtigen Zahlen zu finden.',
-    [],
-  );
+  const hint = useMemo(() => {
+    const hints = (problem?.hints ?? []).filter((value): value is string => Boolean(value));
+    if (hints.length > 0) return hints[0];
+    return 'Wenn du feststeckst, versuche den Aufgabentext zu markieren und die wichtigen Zahlen zu finden.';
+  }, [problem?.hints]);
 
   const normalize = (value: string) =>
     value

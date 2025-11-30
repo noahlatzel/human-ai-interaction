@@ -46,7 +46,7 @@ def test_cookie_and_bearer_mismatch_returns_401(client: TestClient) -> None:
         json={
             "problemDescription": "Mismatch test",
             "solution": "42",
-            "difficulty": 1.0,
+            "difficulty": "einfach",
             "operations": ["addition"],
         },
     )

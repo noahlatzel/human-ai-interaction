@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm, type FieldValues } from 'react-hook-form';
 import type { MathWordProblemCreate, MathematicalOperation } from '../../../types/problem';
 
 type ProblemFormProps = {
@@ -7,6 +7,8 @@ type ProblemFormProps = {
   isSubmitting: boolean;
 };
 
+type ProblemFormValues = MathWordProblemCreate & FieldValues;
+
 const OPERATIONS: { value: MathematicalOperation; label: string }[] = [
   { value: 'addition', label: 'Addition' },
   { value: 'subtraction', label: 'Subtraktion' },
@@ -14,18 +16,47 @@ const OPERATIONS: { value: MathematicalOperation; label: string }[] = [
   { value: 'division', label: 'Division' },
 ];
 
+const DIFFICULTIES: { value: MathWordProblemCreate['difficulty']; label: string }[] = [
+  { value: 'einfach', label: 'Einfach' },
+  { value: 'mittel', label: 'Mittel' },
+  { value: 'schwierig', label: 'Schwierig' },
+];
+
 export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: ProblemFormProps) {
-  const { register, handleSubmit, reset, watch } = useForm<MathWordProblemCreate>({
-    defaultValues: { problemDescription: '', solution: '', difficulty: 1, operations: [] },
+  const defaultValues: ProblemFormValues = {
+    problemDescription: '',
+    solution: '',
+    difficulty: 'einfach',
+    operations: [],
+    hints: [],
+  };
+
+  const { register, handleSubmit, reset, watch, control } = useForm<ProblemFormValues>({
+    defaultValues,
   });
 
-  const submit = async (values: MathWordProblemCreate) => {
+  const { fields, append, remove, replace } = useFieldArray<ProblemFormValues>({
+    control,
+    name: 'hints',
+  });
+
+  const submit = async (values: ProblemFormValues) => {
     const ops = values.operations.filter(Boolean);
-    await onSubmit({ ...values, operations: ops });
-    reset();
+    const normalizedHints = (values.hints ?? [])
+      .map((hint) => (hint && hint.trim() ? hint.trim() : null))
+      .slice(0, 3);
+    const payload: MathWordProblemCreate = {
+      ...values,
+      operations: ops,
+      hints: normalizedHints,
+    };
+    await onSubmit(payload);
+    reset(defaultValues);
+    replace([]);
   };
 
   const selectedOps = watch('operations') as MathematicalOperation[];
+  const hintCount = fields.length;
 
   return (
     <form className="space-y-3" onSubmit={handleSubmit(submit)}>
@@ -51,18 +82,17 @@ export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: Proble
       </label>
 
       <label className="space-y-1 block">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">Schwierigkeit (1-5)</span>
-          <span className="text-xs text-slate-500">{watch('difficulty') || 1}</span>
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          step={0.5}
-          className="w-full accent-blue-600"
-          {...register('difficulty', { valueAsNumber: true, required: true })}
-        />
+        <span className="text-sm font-semibold text-slate-700">Schwierigkeit</span>
+        <select
+          className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
+          {...register('difficulty', { required: true })}
+        >
+          {DIFFICULTIES.map((difficulty) => (
+            <option key={difficulty.value} value={difficulty.value}>
+              {difficulty.label}
+            </option>
+          ))}
+        </select>
       </label>
 
       <div className="space-y-2">
@@ -73,14 +103,14 @@ export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: Proble
               key={op.value}
               className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm cursor-pointer ${
                 selectedOps?.includes(op.value)
-                  ? 'border-blue-300 bg-blue-50 text-blue-700'
+                  ? 'border-green-300 bg-green-50 text-green-700'
                   : 'border-slate-200 text-slate-700'
               }`}
             >
               <input
                 type="checkbox"
                 value={op.value}
-                className="accent-blue-600"
+                className="accent-green-600"
                 {...register('operations')}
               />
               <span>{op.label}</span>
@@ -89,11 +119,64 @@ export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: Proble
         </div>
       </div>
 
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-700">Hinweise (optional)</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (hintCount < 3) append('');
+            }}
+            disabled={hintCount >= 3}
+            className="text-sm font-semibold text-green-700 hover:text-green-800 disabled:text-slate-400"
+          >
+            Hinweis hinzufügen
+          </button>
+        </div>
+        {fields.length > 0 ? (
+          <div className="space-y-2">
+            {fields.map((field, index) => (
+              <div key={field.id} className="flex items-start gap-2">
+                <textarea
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
+                  rows={2}
+                  placeholder={`Hinweis ${index + 1}`}
+                  {...register(`hints.${index}` as const)}
+                />
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="p-2 text-rose-600 hover:text-rose-700"
+                  aria-label={`Hinweis ${index + 1} entfernen`}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    aria-hidden
+                  >
+                    <path
+                      d="M6 6l12 12M18 6l-12 12"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500">Noch keine Hinweise hinzugefügt.</p>
+        )}
+      </div>
+
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 text-white text-sm font-semibold shadow hover:from-blue-700 hover:to-green-700 disabled:opacity-60"
+          className="px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold shadow hover:bg-green-700 disabled:opacity-60"
         >
           {isSubmitting ? 'Wird erstellt...' : 'Aufgabe speichern'}
         </button>

@@ -27,7 +27,7 @@ export default function ProblemHeader({ problem }: ProblemHeaderProps) {
           ))}
         </div>
         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${toneClass}`}>
-          {difficulty.label} • {difficulty.value.toFixed(1)}
+          {difficulty.label}
         </span>
       </div>
       <h1 className="text-2xl font-bold text-slate-900">Textaufgabe</h1>

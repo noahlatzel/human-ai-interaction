@@ -81,7 +81,7 @@ export default function TeacherDashboardPage() {
   return (
     <TeacherLayout
       title={`Hallo ${fullName}`}
-      subtitle="Verwalte deine Schüler:innen und Aufgaben."
+      subtitle="Verwalte deine Aufgaben und prüfe den Lernfortschritt."
       actions={
         <div className="flex items-center gap-2">
           <button
@@ -117,7 +117,7 @@ export default function TeacherDashboardPage() {
             <button
               type="button"
               onClick={() => setShowStudentForm((v) => !v)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 text-white text-sm font-semibold shadow hover:from-blue-700 hover:to-green-700"
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700"
             >
               {showStudentForm ? 'Formular schließen' : 'Schüler:in hinzufügen'}
             </button>

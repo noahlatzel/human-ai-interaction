@@ -58,7 +58,7 @@ export default function ProblemCard({ problem, onSelect }: ProblemCardProps) {
             </div>
           </div>
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${toneClass}`}>
-            {difficulty.label} • {difficulty.value.toFixed(1)}
+            {difficulty.label}
           </span>
         </div>
         <p className="text-base font-semibold text-slate-900 line-clamp-2">{problem.problemDescription}</p>
