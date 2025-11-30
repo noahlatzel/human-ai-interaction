@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import forestBackground from '../../../assets/forestBackground.png';
 
 type TeacherLayoutProps = {
   title: string;
@@ -9,7 +10,12 @@ type TeacherLayoutProps = {
 
 export default function TeacherLayout({ title, subtitle, actions, children }: TeacherLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 px-4 py-10">
+    <div
+      className="min-h-screen px-4 py-10 bg-cover bg-center"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.6)), url(${forestBackground})`,
+      }}
+    >
       <div className="max-w-6xl mx-auto space-y-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
