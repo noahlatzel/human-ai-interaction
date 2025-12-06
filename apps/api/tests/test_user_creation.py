@@ -21,7 +21,7 @@ async def _fetch_learning_sessions(app: FastAPI) -> list[LearningSession]:
 def test_admin_create_teacher_without_tokens_or_new_session(
     client: TestClient,
 ) -> None:
-    """Admin can create teachers without issuing sessions or tokens."""
+    """Admin hitting teacher-only user creation is forbidden and session is unchanged."""
     app = cast(FastAPI, client.app)
     admin_login = _login(client, "admin@example.com", "adminpw")
     cookie_name = app.state.settings.session_cookie_name
@@ -34,14 +34,11 @@ def test_admin_create_teacher_without_tokens_or_new_session(
         json={
             "email": unique_email("created-teacher"),
             "password": "teachpw",
-            "role": "teacher",
+            "role": "student",
         },
     )
 
-    assert response.status_code == 201
-    body = response.json()
-    assert set(body.keys()) == {"user"}
-    assert body["user"]["role"] == "teacher"
+    assert response.status_code == 403
     assert client.cookies.get(cookie_name) == admin_cookie
     after_sessions = asyncio.run(_fetch_learning_sessions(app))
     assert len(after_sessions) == len(before_sessions)
@@ -52,15 +49,14 @@ def test_teacher_create_student_assigns_teacher_no_new_sessions(
 ) -> None:
     """Teacher-created students inherit teacherId; no new session or tokens set."""
     app = cast(FastAPI, client.app)
-    admin_login = _login(client, "admin@example.com", "adminpw")
     teacher_email = unique_email("created-by-admin")
 
-    create_teacher = client.post(
-        "/v1/users",
-        headers={"Authorization": f"Bearer {admin_login['accessToken']}"},
+    register_teacher = client.post(
+        "/v1/auth/register",
         json={"email": teacher_email, "password": "teachpw", "role": "teacher"},
     )
-    teacher_id = create_teacher.json()["user"]["id"]
+    assert register_teacher.status_code == 201
+    teacher_id = register_teacher.json()["user"]["id"]
 
     teacher_login = _login(client, teacher_email, "teachpw")
     cookie_name = app.state.settings.session_cookie_name

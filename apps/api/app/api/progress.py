@@ -48,12 +48,11 @@ async def set_math_progress(
     response_model=ProgressSummaryResponse,
 )
 async def get_student_progress_summary(
-    actor: AuthContext = Depends(require_roles("teacher", "admin")),
+    actor: AuthContext = Depends(require_roles("teacher")),
     session: AsyncSession = Depends(get_db_session),
 ) -> ProgressSummaryResponse:
     """Return aggregate progress for students scoped by teacher or all students for admin."""
-    teacher_id = None if actor.role == "admin" else actor.uid
-    summary = await math_progress.summarize_progress(session, teacher_id=teacher_id)
+    summary = await math_progress.summarize_progress(session, teacher_id=actor.uid)
     return ProgressSummaryResponse.model_validate(
         {
             "totalProblems": summary.total_problems,

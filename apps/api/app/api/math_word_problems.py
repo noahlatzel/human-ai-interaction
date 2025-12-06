@@ -25,7 +25,7 @@ router = APIRouter(prefix="/math-problems", tags=["math-word-problems"])
     "",
     response_model=MathWordProblemPayload,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_roles("teacher", "admin"))],
+    dependencies=[Depends(require_roles("teacher"))],
 )
 async def create_math_word_problem(
     payload: MathWordProblemCreate,
@@ -52,7 +52,7 @@ async def create_math_word_problem(
 @router.delete(
     "/{problem_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_roles("teacher", "admin"))],
+    dependencies=[Depends(require_roles("teacher"))],
 )
 async def delete_math_word_problem(
     problem_id: str,

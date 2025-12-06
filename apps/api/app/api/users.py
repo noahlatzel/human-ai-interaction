@@ -23,10 +23,10 @@ async def create_user(
     payload: UserCreateRequest,
     session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_app_settings),
-    actor: AuthContext = Depends(require_roles("admin", "teacher")),
+    actor: AuthContext = Depends(require_roles("teacher")),
 ) -> UserCreateResponse:
     """Create a new user without issuing tokens or sessions."""
-    if payload.role == "teacher" and actor.role != "admin":
+    if payload.role != "student":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     existing = await user_store.get_user_by_email(session, payload.email)
@@ -36,13 +36,10 @@ async def create_user(
         )
 
     teacher_id = payload.teacher_id
-    if payload.role == "student":
-        if actor.role == "teacher":
-            teacher_id = actor.uid
-        else:
-            teacher_id = await _resolve_student_teacher_id(
-                session, teacher_id, actor.role, actor.uid
-            )
+    teacher_id = actor.uid if actor.role == "teacher" else teacher_id
+    teacher_id = await _resolve_student_teacher_id(
+        session, teacher_id, actor.role, actor.uid
+    )
 
     user = await user_store.create_user(
         session,
