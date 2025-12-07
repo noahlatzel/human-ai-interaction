@@ -22,7 +22,7 @@ export default function ProfileMock({ firstName, lastName, email, onLogout }: Pr
   return (
     <div className="space-y-4">
       <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-4 flex items-center gap-4">
-        <img src={studentAvatar} alt="Avatar" className="h-14 w-14 rounded-full border border-white shadow" />
+        <img src={studentAvatar} alt="Avatar" className="h-14 w-14 rounded-full border border-white shadow object-contain bg-white" />
         <div>
           <p className="text-sm text-slate-600">Profil (Mock)</p>
           <p className="text-lg font-bold text-slate-900">
