@@ -1,7 +1,9 @@
 import asyncio
+
 from app.config import get_settings
 from app.db import create_engine, create_session_factory
 from app.services import user_store
+
 
 async def main():
     settings = get_settings()
@@ -21,10 +23,12 @@ async def main():
                 password="learnerpw",
                 role="student",
                 first_name="Learner",
-                last_name="User"
+                last_name="User",
             )
             await session.commit()
             print(f"Created user {email} with password 'learnerpw'")
 
+
 if __name__ == "__main__":
     asyncio.run(main())
+

@@ -10,7 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 type LoginFormValues = LoginRequest;
 
 export default function LoginPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+  const { register, handleSubmit } = useForm<LoginFormValues>({
     defaultValues: { email: '', password: '' },
   });
   const { login, isAuthenticated, state, isLoading } = useAuth();
