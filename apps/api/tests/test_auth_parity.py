@@ -47,6 +47,7 @@ def test_cookie_and_bearer_mismatch_returns_401(client: TestClient) -> None:
             "problemDescription": "Mismatch test",
             "solution": "42",
             "difficulty": "einfach",
+            "grade": 3,
             "operations": ["addition"],
         },
     )
@@ -97,7 +98,7 @@ def test_tokens_carry_session_and_guest_claims(client: TestClient) -> None:
     assert admin_claims["lsid"] == admin_tokens["learningSessionId"]
     assert admin_claims["guest"] is False
 
-    guest_resp = client.post("/v1/auth/guest", json={"firstName": "Guesty"})
+    guest_resp = client.post("/v1/auth/guest", json={"firstName": "Guesty", "grade": 3})
     assert guest_resp.status_code == 201
     guest_tokens = guest_resp.json()
     guest_claims = jwt.decode(

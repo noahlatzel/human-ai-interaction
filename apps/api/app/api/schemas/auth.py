@@ -26,13 +26,12 @@ class RegisterRequest(BaseModel):
     role: Literal["teacher", "student"]
     first_name: str | None = Field(default=None, alias="firstName")
     last_name: str | None = Field(default=None, alias="lastName")
-    teacher_id: str | None = Field(
+    class_id: str | None = Field(default=None, alias="classId")
+    grade: int | None = Field(
         default=None,
-        alias="teacherId",
-        description=(
-            "Teacher ID a student should be assigned to. "
-            "Teachers registering students ignore this value, and solo students can omit it."
-        ),
+        ge=3,
+        le=4,
+        description="Required for students when classId is not provided (3 or 4).",
     )
 
 
@@ -69,9 +68,10 @@ class LogoutRequest(BaseModel):
 
 
 class GuestLoginRequest(BaseModel):
-    """Payload for guest entry (first name only)."""
+    """Payload for guest entry."""
 
     firstName: str = Field(min_length=1, max_length=64)
+    grade: int = Field(ge=3, le=4)
 
 
 __all__ = [

@@ -11,7 +11,7 @@ type RegisterFormValues = Omit<RegisterRequest, 'role'>;
 
 export default function RegisterTeacherPage() {
   const { register, handleSubmit } = useForm<RegisterFormValues>({
-    defaultValues: { email: '', password: '', firstName: '', lastName: '', teacherId: '' },
+    defaultValues: { email: '', password: '', firstName: '', lastName: '', classId: '', grade: null },
   });
   const { registerTeacher, isAuthenticated, state, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +26,8 @@ export default function RegisterTeacherPage() {
     try {
       const sanitized: RegisterFormValues = {
         ...values,
-        teacherId: values.teacherId || null,
+        classId: null,
+        grade: null,
         firstName: values.firstName || null,
         lastName: values.lastName || null,
       };

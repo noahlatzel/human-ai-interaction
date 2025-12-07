@@ -28,6 +28,7 @@ def create_problem(
     description: str = "Sample problem",
     solution: str = "42",
     difficulty: str = "mittel",
+    grade: int = 3,
 ) -> dict[str, Any]:
     """Create a math word problem using an authorized token."""
     response = client.post(
@@ -37,8 +38,22 @@ def create_problem(
             "problemDescription": description,
             "solution": solution,
             "difficulty": difficulty,
+            "grade": grade,
             "operations": ["addition"],
         },
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+def create_class(
+    client: TestClient, token: str, grade: int = 3, suffix: str = "a"
+) -> dict[str, Any]:
+    """Create a class for the authenticated teacher."""
+    response = client.post(
+        "/v1/classes",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"grade": grade, "suffix": suffix},
     )
     assert response.status_code == 201
     return response.json()
@@ -53,12 +68,18 @@ def test_student_can_set_and_update_progress(client: TestClient) -> None:
     )
     assert teacher_resp.status_code == 201
     teacher_token = teacher_resp.json()["accessToken"]
-    problem = create_problem(client, teacher_token)
+    created_class = create_class(client, teacher_token, grade=3)
+    problem = create_problem(client, teacher_token, grade=3)
 
     student_email = unique_email("student")
     register_resp = client.post(
         "/v1/auth/register",
-        json={"email": student_email, "password": "studpw", "role": "student"},
+        json={
+            "email": student_email,
+            "password": "studpw",
+            "role": "student",
+            "classId": created_class["id"],
+        },
     )
     assert register_resp.status_code == 201
     student_tokens = register_resp.json()
@@ -91,12 +112,18 @@ def test_progress_requires_success_and_valid_problem(client: TestClient) -> None
     )
     assert teacher_resp.status_code == 201
     teacher_token = teacher_resp.json()["accessToken"]
-    problem = create_problem(client, teacher_token)
+    created_class = create_class(client, teacher_token, grade=3)
+    problem = create_problem(client, teacher_token, grade=3)
 
     student_email = unique_email("student")
     student_resp = client.post(
         "/v1/auth/register",
-        json={"email": student_email, "password": "studpw", "role": "student"},
+        json={
+            "email": student_email,
+            "password": "studpw",
+            "role": "student",
+            "classId": created_class["id"],
+        },
     )
     assert student_resp.status_code == 201
     student_token = student_resp.json()["accessToken"]
@@ -127,7 +154,7 @@ def test_guest_student_can_set_progress(client: TestClient) -> None:
     teacher_token = teacher_resp.json()["accessToken"]
     problem = create_problem(client, teacher_token)
 
-    guest_resp = client.post("/v1/auth/guest", json={"firstName": "Guesty"})
+    guest_resp = client.post("/v1/auth/guest", json={"firstName": "Guesty", "grade": 3})
     assert guest_resp.status_code == 201
     guest_token = guest_resp.json()["accessToken"]
 
@@ -153,11 +180,13 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     assert teacher_resp.status_code == 201
     teacher_tokens = teacher_resp.json()
 
+    created_class = create_class(client, teacher_tokens["accessToken"], grade=3)
+
     problem_one = create_problem(
-        client, teacher_tokens["accessToken"], description="P1"
+        client, teacher_tokens["accessToken"], description="P1", grade=3
     )
     problem_two = create_problem(
-        client, teacher_tokens["accessToken"], description="P2"
+        client, teacher_tokens["accessToken"], description="P2", grade=3
     )
 
     student_one_email = unique_email("stud1")
@@ -165,7 +194,12 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     student_one_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
-        json={"email": student_one_email, "password": "studpw", "role": "student"},
+        json={
+            "email": student_one_email,
+            "password": "studpw",
+            "role": "student",
+            "classId": created_class["id"],
+        },
     )
     assert student_one_resp.status_code == 201
     student_one_token = student_one_resp.json()["accessToken"]
@@ -175,7 +209,12 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     student_two_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
-        json={"email": student_two_email, "password": "studpw", "role": "student"},
+        json={
+            "email": student_two_email,
+            "password": "studpw",
+            "role": "student",
+            "classId": created_class["id"],
+        },
     )
     assert student_two_resp.status_code == 201
 
@@ -239,12 +278,18 @@ def test_progress_summary_handles_zero_problems(client: TestClient) -> None:
     )
     assert teacher_resp.status_code == 201
     teacher_token = teacher_resp.json()["accessToken"]
+    created_class = create_class(client, teacher_token, grade=3)
 
     student_email = unique_email("student-zero")
     student_resp = client.post(
         "/v1/auth/register",
         headers={"Authorization": f"Bearer {teacher_token}"},
-        json={"email": student_email, "password": "studpw", "role": "student"},
+        json={
+            "email": student_email,
+            "password": "studpw",
+            "role": "student",
+            "classId": created_class["id"],
+        },
     )
     assert student_resp.status_code == 201
 

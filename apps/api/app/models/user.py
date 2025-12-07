@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, format_timestamp, utcnow
 
 if TYPE_CHECKING:
+    from .classroom import Classroom
     from .session import UserSession
     from .learning import LearningSession
 
@@ -29,7 +30,9 @@ class User(Base):
     is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     first_name: Mapped[Optional[str]] = mapped_column(String(64))
     last_name: Mapped[Optional[str]] = mapped_column(String(64))
-    teacher_id: Mapped[Optional[str]] = mapped_column(String(64), index=True)
+    class_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("classrooms.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False
     )
@@ -47,6 +50,19 @@ class User(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    classroom: Mapped[Optional["Classroom"]] = relationship(
+        "Classroom",
+        back_populates="students",
+        foreign_keys=[class_id],
+        lazy="joined",
+    )
+    owned_classes: Mapped[list["Classroom"]] = relationship(
+        "Classroom",
+        back_populates="teacher",
+        cascade="all, delete-orphan",
+        foreign_keys="Classroom.teacher_id",
+        lazy="selectin",
+    )
     learning_sessions: Mapped[list["LearningSession"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -61,7 +77,9 @@ class User(Base):
             "role": self.role,
             "firstName": self.first_name,
             "lastName": self.last_name,
-            "teacherId": self.teacher_id,
+            "classId": self.class_id,
+            "classGrade": self.classroom.grade if self.classroom else None,
+            "classLabel": self.classroom.label if self.classroom else None,
             "createdAt": format_timestamp(self.created_at),
             "updatedAt": format_timestamp(self.updated_at),
             "isGuest": self.is_guest,

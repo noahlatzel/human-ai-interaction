@@ -6,7 +6,7 @@ import type { DashboardStudent } from '../../../types/student';
 type StudentRowProps = {
   student: DashboardStudent;
   onToggleGroup: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void> | void;
 };
 
 const ProgressBar = ({ percent }: { percent: number }) => (
@@ -44,7 +44,7 @@ export default function StudentRow({ student, onToggleGroup, onDelete }: Student
                   type="button"
                   onClick={() => {
                     setShowConfirm(false);
-                    onDelete(student.studentId);
+                    void onDelete(student.studentId);
                   }}
                   className="px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700"
                 >
@@ -62,6 +62,9 @@ export default function StudentRow({ student, onToggleGroup, onDelete }: Student
       <div className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 py-3 last:border-0">
         <div className="col-span-4">
           <div className="font-semibold text-slate-900">{fullName}</div>
+          {student.classLabel ? (
+            <div className="text-xs text-slate-500">Klasse {student.classLabel}</div>
+          ) : null}
           <div className="text-xs text-slate-500">ID: {student.studentId}</div>
         </div>
         <div className="col-span-3">

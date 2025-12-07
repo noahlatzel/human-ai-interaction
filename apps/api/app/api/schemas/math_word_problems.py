@@ -17,6 +17,9 @@ class MathWordProblemCreate(BaseModel):
         serialization_alias="problemDescription",
         min_length=1,
     )
+    grade: int = Field(
+        ge=3, le=4, description="Grade level (3 or 4) the problem targets."
+    )
     solution: str = Field(min_length=1)
     difficulty: DifficultyLevel
     hints: list[str | None] | None = Field(
@@ -37,6 +40,7 @@ class MathWordProblemPayload(BaseModel):
         validation_alias="problemDescription",
         serialization_alias="problemDescription",
     )
+    grade: int
     solution: str
     difficulty: DifficultyLevel
     operations: list[MathematicalOperation]
@@ -49,6 +53,7 @@ class MathWordProblemPayload(BaseModel):
             id=problem.id,
             problem_description=problem.problem_description,
             solution=problem.solution,
+            grade=problem.grade,
             difficulty=problem.difficulty,
             operations=[operation.operation for operation in problem.operations],
             hints=[problem.hint1, problem.hint2, problem.hint3],

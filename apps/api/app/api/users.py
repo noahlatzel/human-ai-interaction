@@ -8,9 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import AuthContext, require_roles
 from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
-from app.services import user_store
-
-from .auth import _resolve_student_teacher_id
+from app.models import ClassType
+from app.services import class_store, user_store
 from .schemas.users import UserCreateRequest, UserCreateResponse, UserPayload
 
 router = APIRouter()
@@ -35,11 +34,30 @@ async def create_user(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
 
-    teacher_id = payload.teacher_id
-    teacher_id = actor.uid if actor.role == "teacher" else teacher_id
-    teacher_id = await _resolve_student_teacher_id(
-        session, teacher_id, actor.role, actor.uid
-    )
+    if payload.class_id:
+        classroom = await class_store.get_teacher_class_by_id(
+            session, class_id=payload.class_id, teacher_id=actor.uid
+        )
+        if classroom is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Class not found"
+            )
+        class_id = classroom.id
+    elif payload.grade is not None:
+        try:
+            system_class = await class_store.ensure_system_class(
+                session, grade=payload.grade, class_type=ClassType.SOLO
+            )
+            class_id = system_class.id
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+            ) from exc
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="grade or classId is required",
+        )
 
     user = await user_store.create_user(
         session,
@@ -49,7 +67,7 @@ async def create_user(
         role=payload.role,
         first_name=payload.first_name,
         last_name=payload.last_name,
-        teacher_id=teacher_id,
+        class_id=class_id,
     )
     await session.commit()
     return UserCreateResponse(user=UserPayload.from_model(user))

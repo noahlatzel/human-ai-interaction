@@ -6,6 +6,7 @@ export interface MathWordProblem {
   id: string;
   problemDescription: string;
   solution: string;
+  grade: number;
   difficulty: DifficultyLevel;
   operations: MathematicalOperation[];
   hints: (string | null)[];
@@ -23,6 +24,7 @@ export interface MathWordProblemListResponse {
 export interface MathWordProblemCreate {
   problemDescription: string;
   solution: string;
+  grade: number;
   difficulty: DifficultyLevel;
   operations: MathematicalOperation[];
   hints: (string | null)[];

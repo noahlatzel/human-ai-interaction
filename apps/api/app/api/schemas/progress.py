@@ -46,6 +46,9 @@ class StudentProgressSummary(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     student_id: str = Field(alias="studentId")
+    class_id: str | None = Field(alias="classId", default=None)
+    class_grade: int | None = Field(alias="classGrade", default=None)
+    class_label: str | None = Field(alias="classLabel", default=None)
     first_name: str | None = Field(alias="firstName", default=None)
     last_name: str | None = Field(alias="lastName", default=None)
     solved: int
@@ -58,6 +61,9 @@ class StudentProgressSummary(BaseModel):
         return cls.model_validate(
             {
                 "studentId": stats.student_id,
+                "classId": stats.class_id,
+                "classGrade": stats.class_grade,
+                "classLabel": stats.class_label,
                 "firstName": stats.first_name,
                 "lastName": stats.last_name,
                 "solved": stats.solved,

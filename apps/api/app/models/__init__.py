@@ -1,6 +1,7 @@
 """Models package exports."""
 
 from .base import Base, format_timestamp, utcnow
+from .classroom import Classroom, ClassType
 from .learning import LearningSession
 from .math import (
     DifficultyLevel,
@@ -20,6 +21,8 @@ __all__ = [
     "MathematicalOperation",
     "DifficultyLevel",
     "MathWordProblemProgress",
+    "Classroom",
+    "ClassType",
     "User",
     "UserRefreshToken",
     "UserSession",

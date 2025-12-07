@@ -14,7 +14,8 @@ from app.auth import (
 )
 from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
-from app.services import learning, security, sessions, user_store
+from app.models import ClassType
+from app.services import class_store, learning, security, sessions, user_store
 
 from .deps import clear_session_cookie, issue_tokens, set_session_cookie
 from .schemas.auth import (
@@ -69,24 +70,40 @@ async def _resolve_registration_caller(
     return None, None, None
 
 
-async def _resolve_student_teacher_id(
+async def _resolve_registration_classroom(
     session: AsyncSession,
-    candidate_teacher_id: str | None,
+    payload: RegisterRequest,
     caller_role: str | None,
     caller_id: str | None,
-) -> str:
-    """Return the teacher_id to persist for a student registration."""
-    if caller_role == "teacher" and caller_id:
-        return caller_id
-    if candidate_teacher_id:
-        teacher = await user_store.get_user_by_id(session, candidate_teacher_id)
-        if teacher is None or teacher.role != "teacher":
+) -> str | None:
+    """Resolve the class a student should join during registration."""
+    if payload.role != "student":
+        return None
+    if payload.class_id:
+        classroom = await class_store.get_class_by_id(session, payload.class_id)
+        if classroom is None or classroom.class_type != ClassType.TEACHER:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Teacher not found",
+                status_code=status.HTTP_404_NOT_FOUND, detail="Class not found"
             )
-        return candidate_teacher_id
-    return "solo-student"
+        if caller_role == "teacher" and caller_id and classroom.teacher_id != caller_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+            )
+        return classroom.id
+    if payload.grade is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="grade is required when classId is missing",
+        )
+    try:
+        system_class = await class_store.ensure_system_class(
+            session, grade=payload.grade, class_type=ClassType.SOLO
+        )
+        return system_class.id
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
 
 @router.post("/login", response_model=AuthSuccess)
@@ -142,7 +159,7 @@ async def register(
     actor: AuthContext | None = Depends(get_optional_user),
 ) -> AuthSuccess:
     """Register a new teacher or student."""
-    caller_role, caller_id, resolved_actor = await _resolve_registration_caller(
+    caller_role, caller_id, _resolved_actor = await _resolve_registration_caller(
         actor, request, settings
     )
 
@@ -152,14 +169,15 @@ async def register(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
 
-    teacher_id = payload.teacher_id
-    if payload.role == "student":
-        if resolved_actor and resolved_actor.role == "teacher":
-            teacher_id = resolved_actor.uid
-        else:
-            teacher_id = await _resolve_student_teacher_id(
-                session, teacher_id, caller_role, caller_id
-            )
+    if payload.role == "student" and caller_role == "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admins cannot register students",
+        )
+
+    class_id = await _resolve_registration_classroom(
+        session, payload, caller_role, caller_id
+    )
 
     user = await user_store.create_user(
         session,
@@ -169,7 +187,7 @@ async def register(
         role=payload.role,
         first_name=payload.first_name,
         last_name=payload.last_name,
-        teacher_id=teacher_id,
+        class_id=class_id,
     )
 
     learning_session = await learning.start_learning_session(session, user)

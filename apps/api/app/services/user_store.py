@@ -42,7 +42,7 @@ async def create_user(
     role: str,
     first_name: str | None = None,
     last_name: str | None = None,
-    teacher_id: str | None = None,
+    class_id: str | None = None,
     is_guest: bool = False,
 ) -> User:
     """Create a new user with a hashed password."""
@@ -56,7 +56,7 @@ async def create_user(
         is_guest=is_guest,
         first_name=first_name,
         last_name=last_name,
-        teacher_id=teacher_id,
+        class_id=class_id,
     )
     session.add(user)
     await session.flush()
@@ -131,6 +131,7 @@ async def create_guest_user(
     session: AsyncSession,
     *,
     first_name: str,
+    class_id: str | None = None,
 ) -> User:
     """Create a guest student user with minimal attributes."""
     user = User(
@@ -141,7 +142,7 @@ async def create_guest_user(
         is_guest=True,
         first_name=first_name,
         last_name=None,
-        teacher_id="solo-student",
+        class_id=class_id,
     )
     session.add(user)
     await session.flush()

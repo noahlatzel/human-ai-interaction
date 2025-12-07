@@ -5,7 +5,16 @@ from __future__ import annotations
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, UniqueConstraint
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, utcnow
@@ -47,6 +56,7 @@ class MathWordProblem(Base):
         ),
         nullable=False,
     )
+    grade: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     hint1: Mapped[str | None] = mapped_column(Text, nullable=True)
     hint2: Mapped[str | None] = mapped_column(Text, nullable=True)
     hint3: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -6,7 +6,9 @@ export interface AuthUser {
   role: UserRole;
   firstName?: string | null;
   lastName?: string | null;
-  teacherId?: string | null;
+  classId?: string | null;
+  classGrade?: number | null;
+  classLabel?: string | null;
   createdAt: string;
   updatedAt: string;
   isGuest?: boolean;

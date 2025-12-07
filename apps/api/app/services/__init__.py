@@ -1,6 +1,7 @@
 """Service layer packages."""
 
 from . import (
+    class_store,
     learning,
     math_progress,
     math_word_problems,
@@ -10,6 +11,7 @@ from . import (
 )
 
 __all__ = [
+    "class_store",
     "learning",
     "math_progress",
     "math_word_problems",

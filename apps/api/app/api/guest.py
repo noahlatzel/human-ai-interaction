@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
-from app.services import learning, sessions, user_store
+from app.models import ClassType
+from app.services import class_store, learning, sessions, user_store
 
 from .deps import issue_tokens, set_session_cookie
 from .schemas.auth import AuthSuccess, GuestLoginRequest
@@ -24,7 +25,17 @@ async def create_guest(
     settings: Settings = Depends(get_app_settings),
 ) -> AuthSuccess:
     """Create a guest student, start a learning session, and set a session cookie."""
-    user = await user_store.create_guest_user(session, first_name=payload.firstName)
+    try:
+        guest_class = await class_store.ensure_system_class(
+            session, grade=payload.grade, class_type=ClassType.GUEST
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+    user = await user_store.create_guest_user(
+        session, first_name=payload.firstName, class_id=guest_class.id
+    )
     learning_session = await learning.start_learning_session(session, user)
     user_session = await sessions.create_user_session(
         session, settings, user, learning_session
