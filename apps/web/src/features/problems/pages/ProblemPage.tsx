@@ -113,9 +113,24 @@ export default function ProblemPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold bg-white/90 border border-slate-200 rounded-full px-4 py-2 shadow hover:-translate-y-0.5 transition"
+          className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all hover:-translate-y-0.5"
         >
-          ← Zurück
+          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </div>
+          <span className="text-lg">Zurück zur Übersicht</span>
         </button>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">

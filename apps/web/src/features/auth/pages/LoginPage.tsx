@@ -81,11 +81,11 @@ export default function LoginPage() {
       ) : null}
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <label className="block space-y-2">
+        <label className="block space-y-2 relative z-10">
           <span className="text-sm font-semibold text-slate-700 ml-1">E-Mail</span>
           <input
             type="email"
-            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none relative z-10"
             placeholder="name@beispiel.de"
             disabled={isLoading}
             autoComplete="email"
@@ -93,11 +93,11 @@ export default function LoginPage() {
           />
         </label>
 
-        <label className="block space-y-2">
+        <label className="block space-y-2 relative z-10">
           <span className="text-sm font-semibold text-slate-700 ml-1">Passwort</span>
           <input
             type="password"
-            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none relative z-10"
             placeholder="••••••••"
             disabled={isLoading}
             autoComplete="current-password"
