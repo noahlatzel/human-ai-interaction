@@ -11,11 +11,13 @@ export interface RegisterRequest {
   role: 'teacher' | 'student';
   firstName?: string | null;
   lastName?: string | null;
-  teacherId?: string | null;
+  classId?: string | null;
+  grade?: number | null;
 }
 
 export interface GuestLoginRequest {
   firstName: string;
+  grade: number;
 }
 
 export interface RefreshRequest {

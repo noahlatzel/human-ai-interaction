@@ -4,7 +4,7 @@ import StudentRow from './StudentRow';
 type StudentTableProps = {
   students: DashboardStudent[];
   onToggleGroup: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void> | void;
 };
 
 export default function StudentTable({ students, onToggleGroup, onDelete }: StudentTableProps) {

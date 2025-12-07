@@ -7,16 +7,25 @@ type CreateStudentFormProps = {
   onSubmit: (values: FormValues) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
+  classOptions?: { value: string; label: string }[];
+  defaultClassId?: string | null;
 };
 
-export default function CreateStudentForm({ onSubmit, onCancel, isSubmitting }: CreateStudentFormProps) {
+export default function CreateStudentForm({
+  onSubmit,
+  onCancel,
+  isSubmitting,
+  classOptions,
+  defaultClassId = null,
+}: CreateStudentFormProps) {
   const { register, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: {
       email: '',
       password: '',
       firstName: '',
       lastName: '',
-      teacherId: '',
+      classId: defaultClassId ?? '',
+      grade: undefined,
     },
   });
 
@@ -25,9 +34,10 @@ export default function CreateStudentForm({ onSubmit, onCancel, isSubmitting }: 
       ...values,
       firstName: values.firstName || null,
       lastName: values.lastName || null,
-      teacherId: values.teacherId || null,
+      classId: values.classId || null,
+      grade: values.grade ? Number(values.grade) : null,
     });
-    reset();
+    reset({ ...values, classId: defaultClassId ?? '', grade: undefined });
   };
 
   return (
@@ -73,15 +83,45 @@ export default function CreateStudentForm({ onSubmit, onCancel, isSubmitting }: 
         />
       </label>
 
-      <label className="space-y-1 block">
-        <span className="text-sm font-semibold text-slate-700">Lehrer-ID (optional)</span>
-        <input
-          className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
-          type="text"
-          placeholder="Verknüpfe Schüler:in mit Lehrer:in"
-          {...register('teacherId')}
-        />
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="space-y-1 block">
+          <span className="text-sm font-semibold text-slate-700">Klassen-ID (optional)</span>
+          {classOptions && classOptions.length > 0 ? (
+            <select
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+              {...register('classId')}
+              defaultValue={defaultClassId ?? ''}
+            >
+              <option value="">Ohne Klassen-ID</option>
+              {classOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+              type="text"
+              placeholder="Falls vorhanden"
+              {...register('classId')}
+            />
+          )}
+        </label>
+
+        <label className="space-y-1 block">
+          <span className="text-sm font-semibold text-slate-700">Klassenstufe (3 oder 4)</span>
+          <select
+            className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
+            {...register('grade')}
+            defaultValue=""
+          >
+            <option value="">Über Klassen-ID ableiten</option>
+            <option value={3}>3. Klasse</option>
+            <option value={4}>4. Klasse</option>
+          </select>
+        </label>
+      </div>
 
       <div className="flex items-center gap-3 pt-2">
         <button

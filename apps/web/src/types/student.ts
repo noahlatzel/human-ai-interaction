@@ -2,6 +2,9 @@ export interface StudentProgressSummary {
   studentId: string;
   firstName?: string | null;
   lastName?: string | null;
+  classId?: string | null;
+  classGrade?: number | null;
+  classLabel?: string | null;
   solved: number;
   totalProblems: number;
   completionRate: number;

@@ -5,6 +5,7 @@ export const ROUTES = {
   registerTeacher: '/register/teacher',
   guest: '/guest',
   dashboard: '/dashboard',
+  admin: '/admin',
   teacherDashboard: '/teacher-dashboard',
   problem: '/tasks/:problemId',
   account: '/account',
@@ -14,7 +15,8 @@ export const ROUTES = {
 export type AppRouteKey = keyof typeof ROUTES;
 
 export const getHomeRouteForRole = (role?: 'admin' | 'teacher' | 'student') => {
-  if (role === 'teacher' || role === 'admin') return ROUTES.teacherDashboard;
+  if (role === 'teacher') return ROUTES.teacherDashboard;
+  if (role === 'admin') return ROUTES.admin;
   return ROUTES.dashboard;
 };
 

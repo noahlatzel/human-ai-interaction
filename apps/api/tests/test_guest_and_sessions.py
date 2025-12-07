@@ -27,13 +27,15 @@ async def _fetch_session(app: FastAPI, session_id: str) -> UserSession | None:
 def test_guest_login_sets_cookie_and_learning_session(client: TestClient) -> None:
     """Guests can enter with first name only and receive a session cookie."""
     app = cast(FastAPI, client.app)
-    response = client.post("/v1/auth/guest", json={"firstName": "Guesty"})
+    response = client.post("/v1/auth/guest", json={"firstName": "Guesty", "grade": 3})
     assert response.status_code == 201
     body = response.json()
     cookie_name = app.state.settings.session_cookie_name
     assert response.cookies.get(cookie_name)
     assert body["user"]["isGuest"] is True
     assert body["user"]["email"] is None
+    assert body["user"]["classGrade"] == 3
+    assert body["user"]["classId"]
 
     learning_sessions = asyncio.run(_fetch_learning_sessions(app))
     assert len(learning_sessions) == 1

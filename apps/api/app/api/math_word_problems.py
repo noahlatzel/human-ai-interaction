@@ -7,7 +7,7 @@ from typing import Literal, cast
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_roles
+from app.auth import AuthContext, get_optional_user, require_roles
 from app.dependencies import get_db_session
 from app.models import MathematicalOperation
 from app.services import math_word_problems as math_service
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/math-problems", tags=["math-word-problems"])
     "",
     response_model=MathWordProblemPayload,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_roles("teacher", "admin"))],
+    dependencies=[Depends(require_roles("teacher"))],
 )
 async def create_math_word_problem(
     payload: MathWordProblemCreate,
@@ -39,6 +39,7 @@ async def create_math_word_problem(
             solution=payload.solution,
             difficulty=payload.difficulty,
             operations=payload.operations,
+            grade=payload.grade,
             hints=payload.hints,
         )
     except ValueError as exc:
@@ -52,7 +53,7 @@ async def create_math_word_problem(
 @router.delete(
     "/{problem_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_roles("teacher", "admin"))],
+    dependencies=[Depends(require_roles("teacher"))],
 )
 async def delete_math_word_problem(
     problem_id: str,
@@ -75,7 +76,11 @@ async def list_math_word_problems(
     difficulty_order: str | None = Query(
         default=None, alias="difficultyOrder", description="asc or desc"
     ),
+    grade: int | None = Query(
+        default=None, description="Optional grade filter (3 or 4)"
+    ),
     session: AsyncSession = Depends(get_db_session),
+    actor: AuthContext | None = Depends(get_optional_user),
 ) -> MathWordProblemListResponse:
     """Return all mathematical word problems with optional filters."""
     normalized_order: Literal["asc", "desc"] | None = None
@@ -88,11 +93,21 @@ async def list_math_word_problems(
             )
         normalized_order = cast(Literal["asc", "desc"], lowered)
 
-    problems = await math_service.list_problems(
-        session,
-        operations=operations or None,
-        difficulty_order=normalized_order,
-    )
+    resolved_grade = grade
+    if resolved_grade is None and actor and actor.user.classroom:
+        resolved_grade = actor.user.classroom.grade
+
+    try:
+        problems = await math_service.list_problems(
+            session,
+            operations=operations or None,
+            difficulty_order=normalized_order,
+            grade=resolved_grade,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
     return MathWordProblemListResponse(
         problems=[MathWordProblemPayload.from_model(problem) for problem in problems]
     )

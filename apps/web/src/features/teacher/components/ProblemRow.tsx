@@ -17,6 +17,7 @@ export default function ProblemRow({ problem, onDelete }: ProblemRowProps) {
           <div className="text-sm font-semibold text-green-700">Aufgabe</div>
           <p className="text-sm text-slate-800">{problem.problemDescription}</p>
           <p className="text-xs text-slate-500">Lösung: {problem.solution}</p>
+          <p className="text-xs text-slate-500">Stufe: {problem.grade}. Klasse</p>
           <p className="text-xs text-slate-500">
             Operationen: {problem.operations.map((op) => OPERATIONS_LABELS[op] ?? op).join(', ')}
           </p>

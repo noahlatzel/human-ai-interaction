@@ -18,10 +18,21 @@ async def _fetch_learning_sessions(app: FastAPI) -> list[LearningSession]:
         return list(result.scalars().all())
 
 
+def _create_class(client: TestClient, token: str, grade: int = 3) -> dict[str, str]:
+    """Helper to create a class for the authenticated teacher."""
+    response = client.post(
+        "/v1/classes",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"grade": grade, "suffix": "a"},
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
 def test_admin_create_teacher_without_tokens_or_new_session(
     client: TestClient,
 ) -> None:
-    """Admin can create teachers without issuing sessions or tokens."""
+    """Admin hitting teacher-only user creation is forbidden and session is unchanged."""
     app = cast(FastAPI, client.app)
     admin_login = _login(client, "admin@example.com", "adminpw")
     cookie_name = app.state.settings.session_cookie_name
@@ -34,14 +45,11 @@ def test_admin_create_teacher_without_tokens_or_new_session(
         json={
             "email": unique_email("created-teacher"),
             "password": "teachpw",
-            "role": "teacher",
+            "role": "student",
         },
     )
 
-    assert response.status_code == 201
-    body = response.json()
-    assert set(body.keys()) == {"user"}
-    assert body["user"]["role"] == "teacher"
+    assert response.status_code == 403
     assert client.cookies.get(cookie_name) == admin_cookie
     after_sessions = asyncio.run(_fetch_learning_sessions(app))
     assert len(after_sessions) == len(before_sessions)
@@ -50,22 +58,22 @@ def test_admin_create_teacher_without_tokens_or_new_session(
 def test_teacher_create_student_assigns_teacher_no_new_sessions(
     client: TestClient,
 ) -> None:
-    """Teacher-created students inherit teacherId; no new session or tokens set."""
+    """Teacher-created students join the teacher's class; no new session or tokens set."""
     app = cast(FastAPI, client.app)
-    admin_login = _login(client, "admin@example.com", "adminpw")
     teacher_email = unique_email("created-by-admin")
 
-    create_teacher = client.post(
-        "/v1/users",
-        headers={"Authorization": f"Bearer {admin_login['accessToken']}"},
+    register_teacher = client.post(
+        "/v1/auth/register",
         json={"email": teacher_email, "password": "teachpw", "role": "teacher"},
     )
-    teacher_id = create_teacher.json()["user"]["id"]
+    assert register_teacher.status_code == 201
 
     teacher_login = _login(client, teacher_email, "teachpw")
     cookie_name = app.state.settings.session_cookie_name
     teacher_cookie = client.cookies.get(cookie_name)
     before_sessions = asyncio.run(_fetch_learning_sessions(app))
+
+    created_class = _create_class(client, teacher_login["accessToken"], grade=3)
 
     response = client.post(
         "/v1/users",
@@ -74,6 +82,7 @@ def test_teacher_create_student_assigns_teacher_no_new_sessions(
             "email": unique_email("created-student"),
             "password": "studpw",
             "role": "student",
+            "classId": created_class["id"],
         },
     )
 
@@ -81,7 +90,8 @@ def test_teacher_create_student_assigns_teacher_no_new_sessions(
     body = response.json()
     assert set(body.keys()) == {"user"}
     assert body["user"]["role"] == "student"
-    assert body["user"]["teacherId"] == teacher_id
+    assert body["user"]["classId"] == created_class["id"]
+    assert body["user"]["classGrade"] == 3
     assert client.cookies.get(cookie_name) == teacher_cookie
 
     after_sessions = asyncio.run(_fetch_learning_sessions(app))

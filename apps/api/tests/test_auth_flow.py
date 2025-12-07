@@ -51,13 +51,24 @@ def test_register_teacher_requires_admin(client: TestClient) -> None:
     assert response.status_code == 201
 
 
+def _create_class(
+    client: TestClient, token: str, grade: int = 3, suffix: str = ""
+) -> dict[str, Any]:
+    """Helper to create a class for a teacher."""
+    response = client.post(
+        "/v1/classes",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"grade": grade, "suffix": suffix},
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
 def test_register_student_as_teacher(client: TestClient) -> None:
-    """Teacher registering a student assigns themselves as teacher."""
-    admin_tokens = _login(client, "admin@example.com", "adminpw")
+    """Teacher registering a student assigns them to a class they own."""
     teacher_email = unique_email("teacher")
     register_resp = client.post(
         "/v1/auth/register",
-        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
         json={
             "email": teacher_email,
             "password": "teachpw",
@@ -66,6 +77,9 @@ def test_register_student_as_teacher(client: TestClient) -> None:
     )
     assert register_resp.status_code == 201
     teacher_tokens = _login(client, teacher_email, "teachpw")
+    created_class = _create_class(
+        client, teacher_tokens["accessToken"], grade=3, suffix="a"
+    )
 
     student_resp = client.post(
         "/v1/auth/register",
@@ -74,67 +88,53 @@ def test_register_student_as_teacher(client: TestClient) -> None:
             "email": unique_email("student"),
             "password": "studpw",
             "role": "student",
+            "classId": created_class["id"],
         },
     )
     assert student_resp.status_code == 201
     student_body = student_resp.json()
     assert student_body["user"]["role"] == "student"
-    assert student_body["user"]["teacherId"] == teacher_tokens["user"]["id"]
+    assert student_body["user"]["classId"] == created_class["id"]
+    assert student_body["user"]["classGrade"] == 3
 
 
-def test_register_solo_student(client: TestClient) -> None:
-    """Students without a teacher get the solo-student placeholder."""
+def test_register_solo_student_requires_grade(client: TestClient) -> None:
+    """Students without a class must provide grade and are placed into a system class."""
+    missing_grade = client.post(
+        "/v1/auth/register",
+        json={
+            "email": unique_email("solo-student-missing"),
+            "password": "studpw",
+            "role": "student",
+        },
+    )
+    assert missing_grade.status_code == 400
+
     response = client.post(
         "/v1/auth/register",
         json={
             "email": unique_email("solo-student"),
             "password": "studpw",
             "role": "student",
+            "grade": 4,
         },
     )
     assert response.status_code == 201
-    assert response.json()["user"]["teacherId"] == "solo-student"
+    body = response.json()
+    assert body["user"]["classId"]
+    assert body["user"]["classGrade"] == 4
+    assert body["user"]["classLabel"] == "4"
 
 
-def test_register_student_with_specific_teacher(client: TestClient) -> None:
-    """Admin can assign a student to a specific teacher id."""
-    admin_tokens = _login(client, "admin@example.com", "adminpw")
-    teacher_resp = client.post(
-        "/v1/auth/register",
-        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
-        json={
-            "email": unique_email("assign-teacher"),
-            "password": "teachpw",
-            "role": "teacher",
-        },
-    )
-    assert teacher_resp.status_code == 201
-    teacher_id = teacher_resp.json()["user"]["id"]
-
-    client.cookies.clear()
-    student_resp = client.post(
-        "/v1/auth/register",
-        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
-        json={
-            "email": unique_email("student-assigned"),
-            "password": "studpw",
-            "role": "student",
-            "teacherId": teacher_id,
-        },
-    )
-    assert student_resp.status_code == 201
-    assert student_resp.json()["user"]["teacherId"] == teacher_id
-
-
-def test_register_student_invalid_teacher_id(client: TestClient) -> None:
-    """Supplying a non-existent teacher id fails."""
+def test_register_student_invalid_class_id(client: TestClient) -> None:
+    """Supplying a non-existent class id fails."""
     response = client.post(
         "/v1/auth/register",
         json={
-            "email": unique_email("invalid-teacher"),
+            "email": unique_email("invalid-class"),
             "password": "studpw",
             "role": "student",
-            "teacherId": "missing-teacher-id",
+            "classId": "missing-class-id",
         },
     )
     assert response.status_code == 404
@@ -165,6 +165,22 @@ def test_register_conflict_returns_409(client: TestClient) -> None:
         },
     )
     assert duplicate.status_code == 409
+
+
+def test_admin_cannot_register_students(client: TestClient) -> None:
+    """Admins are forbidden from registering students directly."""
+    admin_tokens = _login(client, "admin@example.com", "adminpw")
+    response = client.post(
+        "/v1/auth/register",
+        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+        json={
+            "email": unique_email("admin-student"),
+            "password": "studpw",
+            "role": "student",
+            "grade": 3,
+        },
+    )
+    assert response.status_code == 403
 
 
 def test_refresh_and_logout_flow(client: TestClient) -> None:

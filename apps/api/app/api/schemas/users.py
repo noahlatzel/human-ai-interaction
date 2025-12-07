@@ -17,7 +17,9 @@ class UserPayload(BaseModel):
     role: Literal["admin", "teacher", "student"]
     firstName: str | None = None
     lastName: str | None = None
-    teacherId: str | None = None
+    classId: str | None = None
+    classGrade: int | None = None
+    classLabel: str | None = None
     createdAt: str
     updatedAt: str
     isGuest: bool = False
@@ -32,7 +34,9 @@ class UserPayload(BaseModel):
             role=role,
             firstName=user.first_name,
             lastName=user.last_name,
-            teacherId=user.teacher_id,
+            classId=user.class_id,
+            classGrade=user.classroom.grade if user.classroom else None,
+            classLabel=user.classroom.label if user.classroom else None,
             createdAt=format_timestamp(user.created_at),
             updatedAt=format_timestamp(user.updated_at),
             isGuest=user.is_guest,
@@ -49,7 +53,13 @@ class UserCreateRequest(BaseModel):
     role: Literal["teacher", "student"]
     first_name: str | None = Field(default=None, alias="firstName")
     last_name: str | None = Field(default=None, alias="lastName")
-    teacher_id: str | None = Field(default=None, alias="teacherId")
+    class_id: str | None = Field(default=None, alias="classId")
+    grade: int | None = Field(
+        default=None,
+        ge=3,
+        le=4,
+        description="Grade required when classId is absent.",
+    )
 
 
 class UserCreateResponse(BaseModel):

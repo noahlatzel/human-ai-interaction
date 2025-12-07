@@ -15,6 +15,7 @@ from app.models import (
     MathWordProblemOperation,
     MathematicalOperation,
 )
+from app.services.class_store import SUPPORTED_GRADES
 
 
 def _normalize_difficulty(difficulty: DifficultyLevel | str) -> DifficultyLevel:
@@ -65,6 +66,13 @@ def _normalize_hints(hints: Sequence[str | None] | None) -> list[str | None]:
     return normalized
 
 
+def _normalize_grade(grade: int) -> int:
+    """Validate and normalize grade for math problems."""
+    if grade not in SUPPORTED_GRADES:
+        raise ValueError(f"Grade must be one of {SUPPORTED_GRADES}.")
+    return grade
+
+
 async def create_problem(
     session: AsyncSession,
     *,
@@ -72,17 +80,20 @@ async def create_problem(
     solution: str,
     difficulty: DifficultyLevel | str,
     operations: Sequence[MathematicalOperation],
+    grade: int,
     hints: Sequence[str | None] | None = None,
 ) -> MathWordProblem:
     """Create and persist a new math word problem."""
     normalized_difficulty = _normalize_difficulty(difficulty)
     normalized_ops = _normalize_operations(operations)
     normalized_hints = _normalize_hints(hints)
+    normalized_grade = _normalize_grade(grade)
     problem = MathWordProblem(
         id=str(uuid4()),
         problem_description=problem_description,
         solution=solution,
         difficulty=normalized_difficulty,
+        grade=normalized_grade,
         hint1=normalized_hints[0] if len(normalized_hints) > 0 else None,
         hint2=normalized_hints[1] if len(normalized_hints) > 1 else None,
         hint3=normalized_hints[2] if len(normalized_hints) > 2 else None,
@@ -111,11 +122,15 @@ async def list_problems(
     *,
     operations: Sequence[MathematicalOperation] | None = None,
     difficulty_order: Literal["asc", "desc"] | None = None,
+    grade: int | None = None,
 ) -> list[MathWordProblem]:
     """Return all math word problems, optionally filtered by operations and sorted."""
     stmt = select(MathWordProblem).options(
         selectinload(MathWordProblem.operations),
     )
+    if grade is not None:
+        normalized_grade = _normalize_grade(grade)
+        stmt = stmt.where(MathWordProblem.grade == normalized_grade)
 
     if operations:
         normalized_ops = _normalize_operations(operations)

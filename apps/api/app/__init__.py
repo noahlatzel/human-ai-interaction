@@ -12,7 +12,8 @@ from .api.router import api_router
 from .config import get_settings
 from .db import create_engine, create_session_factory, run_schema_migrations
 from .middleware import session_middleware
-from .services import user_store
+from .models import ClassType
+from .services import class_store, user_store
 
 
 @asynccontextmanager
@@ -25,6 +26,13 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     await run_schema_migrations(engine)
     async with session_factory() as session:
         await user_store.ensure_admin_user(session, settings)
+        for grade in class_store.supported_grades():
+            await class_store.ensure_system_class(
+                session, grade=grade, class_type=ClassType.SOLO
+            )
+            await class_store.ensure_system_class(
+                session, grade=grade, class_type=ClassType.GUEST
+            )
         await session.commit()
 
     application.state.settings = settings
