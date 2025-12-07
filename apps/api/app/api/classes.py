@@ -146,11 +146,7 @@ async def delete_student_from_class(
         )
 
     student = await user_store.get_user_by_id(session, student_id)
-    if (
-        student is None
-        or student.role != "student"
-        or student.class_id != classroom.id
-    ):
+    if student is None or student.role != "student" or student.class_id != classroom.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
         )

@@ -173,7 +173,11 @@ def test_teacher_cannot_delete_student_from_other_class(client: TestClient) -> N
     """Teachers cannot remove students from classes they do not own."""
     primary_resp = client.post(
         "/v1/auth/register",
-        json={"email": unique_email("primary-teacher"), "password": "teachpw", "role": "teacher"},
+        json={
+            "email": unique_email("primary-teacher"),
+            "password": "teachpw",
+            "role": "teacher",
+        },
     )
     assert primary_resp.status_code == 201
     primary_token = primary_resp.json()["accessToken"]
@@ -193,7 +197,11 @@ def test_teacher_cannot_delete_student_from_other_class(client: TestClient) -> N
 
     other_resp = client.post(
         "/v1/auth/register",
-        json={"email": unique_email("other-teacher"), "password": "teachpw", "role": "teacher"},
+        json={
+            "email": unique_email("other-teacher"),
+            "password": "teachpw",
+            "role": "teacher",
+        },
     )
     assert other_resp.status_code == 201
     other_token = other_resp.json()["accessToken"]

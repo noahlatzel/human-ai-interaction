@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import cast
 from uuid import uuid4
 
 from sqlalchemy import case, func, select
@@ -89,7 +90,7 @@ async def summarize_progress(
         )
     )
     problems_by_grade: dict[int, int] = {
-        int(row.grade): int(row.count) for row in problem_counts_result
+        cast(int, row.grade): cast(int, row.count) for row in problem_counts_result
     }
 
     progress_subquery = (
@@ -137,13 +138,14 @@ async def summarize_progress(
     students: list[StudentProgressStats] = []
     grades_seen: set[int] = set()
     for row in result:
-        grade = int(row.class_grade) if row.class_grade is not None else None
+        grade = cast(int, row.class_grade) if row.class_grade is not None else None
         if grade is not None:
             grades_seen.add(grade)
         suffix = (
             (row.class_suffix or "").strip() if hasattr(row, "class_suffix") else ""
         )
         label = f"{grade}{suffix}" if grade is not None else None
+        total_problems = problems_by_grade.get(grade, 0) if grade is not None else 0
         students.append(
             StudentProgressStats(
                 student_id=row.id,
@@ -153,7 +155,7 @@ async def summarize_progress(
                 class_grade=grade,
                 class_label=label,
                 solved=int(row.solved or 0),
-                total_problems=problems_by_grade.get(grade, 0),
+                total_problems=total_problems,
             )
         )
 

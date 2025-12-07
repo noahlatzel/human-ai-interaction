@@ -13,7 +13,7 @@ import {
   listClasses,
 } from '../api/classes';
 import type { MathWordProblem, MathWordProblemCreate } from '../../../types/problem';
-import type { DashboardStudent, ProgressSummaryResponse, StudentGroup } from '../../../types/student';
+import type { DashboardStudent, StudentGroup } from '../../../types/student';
 import type { CreateStudentRequest, TeacherClass } from '../../../types/teacher';
 
 type DashboardState = {
