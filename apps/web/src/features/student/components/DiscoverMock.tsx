@@ -1,3 +1,9 @@
+import { useState } from 'react';
+import NewTopicsSection from './NewTopicsSection';
+import ChallengesSection from './ChallengesSection';
+import AchievementsSection from './AchievementsSection';
+import TipsSection from './TipsSection';
+
 const discoverItems = [
   {
     id: 'new-topics',
@@ -16,40 +22,44 @@ const discoverItems = [
   {
     id: 'achievements',
     title: 'Errungenschaften',
-    description: 'Schaue dir deine Erfolge an',
+    description: 'Sammle Trophäen und feiere deine Erfolge',
     icon: '🎖️',
-    color: 'from-blue-50 to-indigo-50 border-blue-100',
-  },
-  {
-    id: 'leaderboard',
-    title: 'Bestenliste',
-    description: 'Vergleiche dich mit anderen',
-    icon: '📊',
-    color: 'from-emerald-50 to-teal-50 border-emerald-100',
+    color: 'from-amber-50 to-yellow-50 border-amber-100',
   },
   {
     id: 'tips',
     title: 'Tipps & Tricks',
     description: 'Lerne effektive Lernstrategien',
     icon: '💡',
-    color: 'from-amber-50 to-yellow-50 border-amber-100',
-  },
-  {
-    id: 'community',
-    title: 'Community',
-    description: 'Tausche dich mit anderen aus',
-    icon: '👥',
-    color: 'from-pink-50 to-rose-50 border-pink-100',
+    color: 'from-emerald-50 to-teal-50 border-emerald-100',
   },
 ];
 
 export default function DiscoverMock() {
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+
+  if (selectedSection === 'new-topics') {
+    return <NewTopicsSection onBack={() => setSelectedSection(null)} />;
+  }
+
+  if (selectedSection === 'challenges') {
+    return <ChallengesSection onBack={() => setSelectedSection(null)} />;
+  }
+
+  if (selectedSection === 'achievements') {
+    return <AchievementsSection onBack={() => setSelectedSection(null)} />;
+  }
+
+  if (selectedSection === 'tips') {
+    return <TipsSection onBack={() => setSelectedSection(null)} />;
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
       <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-4">
-        <p className="text-sm font-semibold text-slate-700">Entdecken (Mock)</p>
+        <p className="text-sm font-semibold text-slate-700">Entdecken</p>
         <p className="text-sm text-slate-600">
-          Entdecke neue Möglichkeiten. Diese Kacheln sind noch Platzhalter, bis die Features angebunden sind.
+          Hier kannst du neue Dinge lernen, dich mit anderen messen und deine Erfolge feiern.
         </p>
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
@@ -57,6 +67,7 @@ export default function DiscoverMock() {
           <button
             key={item.id}
             type="button"
+            onClick={() => setSelectedSection(item.id)}
             className={`rounded-3xl border bg-gradient-to-br ${item.color} shadow-sm hover:shadow-lg transition p-4 text-left space-y-2`}
           >
             <div className="flex items-center gap-2">
