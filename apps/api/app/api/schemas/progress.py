@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.math_progress import StudentProgressStats
+from app.services.streak import WeeklyActivityDay as WeeklyActivityDayData
 from app.models import MathWordProblemProgress
 
 
@@ -76,9 +79,45 @@ class ProgressSummaryResponse(BaseModel):
     students: list[StudentProgressSummary]
 
 
+class WeeklyActivityDay(BaseModel):
+    """Single day in the weekly activity calendar."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    date: date
+    day_of_week: str = Field(alias="dayOfWeek")
+    is_today: bool = Field(alias="isToday")
+    has_activity: bool = Field(alias="hasActivity")
+
+    @classmethod
+    def from_data(cls, data: WeeklyActivityDayData) -> "WeeklyActivityDay":
+        """Build schema from service dataclass."""
+        return cls.model_validate(
+            {
+                "date": data.date,
+                "dayOfWeek": data.day_of_week,
+                "isToday": data.is_today,
+                "hasActivity": data.has_activity,
+            }
+        )
+
+
+class StreakResponse(BaseModel):
+    """Response payload for user streak statistics."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    current_streak: int = Field(alias="currentStreak")
+    longest_streak: int = Field(alias="longestStreak")
+    weekly_activity: list[WeeklyActivityDay] = Field(alias="weeklyActivity")
+    activity_history: list[str] = Field(alias="activityHistory")
+
+
 __all__ = [
     "ProgressPayload",
     "ProgressSetRequest",
     "ProgressSummaryResponse",
     "StudentProgressSummary",
+    "StreakResponse",
+    "WeeklyActivityDay",
 ]

@@ -8,13 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import AuthContext, require_roles
 from app.dependencies import get_db_session
 from app.models import MathWordProblem
-from app.services import math_progress
+from app.services import math_progress, streak
 
 from .schemas.progress import (
     ProgressPayload,
     ProgressSetRequest,
     ProgressSummaryResponse,
     StudentProgressSummary,
+    StreakResponse,
+    WeeklyActivityDay,
 )
 
 router = APIRouter(prefix="/progress", tags=["progress"])
@@ -60,6 +62,28 @@ async def get_student_progress_summary(
             "students": [
                 StudentProgressSummary.from_stats(stats) for stats in summary.students
             ],
+        }
+    )
+
+
+@router.get(
+    "/streak",
+    response_model=StreakResponse,
+)
+async def get_user_streak(
+    actor: AuthContext = Depends(require_roles("student")),
+    session: AsyncSession = Depends(get_db_session),
+) -> StreakResponse:
+    """Return current streak, longest streak, weekly activity, and full activity history for the authenticated student."""
+    result = await streak.calculate_streak(session, actor.uid)
+    return StreakResponse.model_validate(
+        {
+            "currentStreak": result.current_streak,
+            "longestStreak": result.longest_streak,
+            "weeklyActivity": [
+                WeeklyActivityDay.from_data(day) for day in result.weekly_activity
+            ],
+            "activityHistory": result.activity_history,
         }
     )
 

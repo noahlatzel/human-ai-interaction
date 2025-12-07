@@ -122,40 +122,44 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       const storedAccess = getAccessToken();
       const storedUser = getStoredUser();
 
-      if (!storedRefresh) {
-        if (storedAccess && storedUser) {
-          setState({
-            status: 'authenticated',
-            user: storedUser,
-            accessToken: storedAccess,
-            refreshToken: null,
-            error: null,
-          });
-        } else {
-          setState((prev) => ({
-            ...prev,
-            status: 'unauthenticated',
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-          }));
+      // If we have an access token and user, assume valid session (skip refresh on load)
+      if (storedAccess && storedUser) {
+        setState({
+          status: 'authenticated',
+          user: storedUser,
+          accessToken: storedAccess,
+          refreshToken: storedRefresh,
+          error: null,
+        });
+        return;
+      }
+
+      // No access token but have refresh token? Try to refresh
+      if (storedRefresh && !storedAccess) {
+        setState((prev) => ({ ...prev, status: 'loading', error: null }));
+
+        try {
+          const auth = await refreshRequest({ refreshToken: storedRefresh });
+          if (!cancelled) {
+            applyAuthSuccess(auth);
+          }
+        } catch (error) {
+          if (!cancelled) {
+            console.error('Refresh failed on bootstrap', error);
+            clearAuth();
+          }
         }
         return;
       }
 
-      setState((prev) => ({ ...prev, status: 'loading', error: null }));
-
-      try {
-        const auth = await refreshRequest({ refreshToken: storedRefresh });
-        if (!cancelled) {
-          applyAuthSuccess(auth);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error('Refresh failed on bootstrap', error);
-          clearAuth();
-        }
-      }
+      // No tokens at all → unauthenticated
+      setState((prev) => ({
+        ...prev,
+        status: 'unauthenticated',
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+      }));
     };
 
     bootstrap();
