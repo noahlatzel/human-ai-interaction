@@ -6,20 +6,21 @@ import ProblemList from '../components/ProblemList';
 import ProgressCard from '../components/ProgressCard';
 import DashboardTabs from '../components/DashboardTabs';
 import DiscoverMock from '../components/DiscoverMock';
-import CalendarMock from '../components/CalendarMock';
+import StudentCalendar from '../components/StudentCalendar';
 import ProfileMock from '../components/ProfileMock';
 import CommunityMock from '../components/CommunityMock';
 import { useStudentProblems } from '../hooks/useStudentProblems';
+import { useStreak } from '../hooks/useStreak';
 import { ROUTES, getProblemRoute } from '../../../lib/routes';
 
 export default function StudentDashboardPage() {
   const { state, logout } = useAuth();
   const navigate = useNavigate();
   const { problems, loading, error, reload } = useStudentProblems();
+  const { streak: streakData } = useStreak();
   const [view, setView] = useState<'home' | 'discover' | 'calendar' | 'profile' | 'community'>('home');
   const [activeTab, setActiveTab] = useState<'practice' | 'class'>('practice');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const streak = 32; // placeholder until calendar/progress is wired
 
   const classExercises = [
     { id: 'c1', date: '09.12.2025', topic: 'Addition', title: 'Zahlenraum bis 100', status: 'open' },
@@ -76,7 +77,7 @@ export default function StudentDashboardPage() {
 
   const renderHome = () => (
     <div className="space-y-4">
-      <ProgressCard streak={streak} />
+      <ProgressCard streakData={streakData} />
 
       <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -299,7 +300,7 @@ export default function StudentDashboardPage() {
   let content: ReactNode = renderHome();
   if (view === 'discover') content = <DiscoverMock />;
   if (view === 'community') content = <CommunityMock />;
-  if (view === 'calendar') content = <CalendarMock />;
+  if (view === 'calendar') content = <StudentCalendar streakData={streakData} />;
   if (view === 'profile')
     content = (
       <ProfileMock
@@ -314,7 +315,7 @@ export default function StudentDashboardPage() {
     <StudentLayout
       userName={fullName}
       onLogout={handleLogout}
-      streak={streak}
+      streak={streakData?.currentStreak ?? 0}
       navActive={view}
       onNavChange={setView}
     >
