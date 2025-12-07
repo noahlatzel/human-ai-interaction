@@ -197,15 +197,6 @@ export default function TeacherDashboardPage() {
               >
                 {showClassForm ? 'Klassenformular schließen' : 'Neue Klasse'}
               </button>
-              {selectedClass ? (
-                <button
-                  type="button"
-                  onClick={() => setShowStudentForm((v) => !v)}
-                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700"
-                >
-                  {showStudentForm ? 'Formular schließen' : 'Schüler:in hinzufügen'}
-                </button>
-              ) : null}
             </div>
           </div>
 
