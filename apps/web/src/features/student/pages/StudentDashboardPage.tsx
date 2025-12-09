@@ -8,9 +8,12 @@ import DashboardTabs from '../components/DashboardTabs';
 import DiscoverMock from '../components/DiscoverMock';
 import StudentCalendar from '../components/StudentCalendar';
 import ProfileMock from '../components/ProfileMock';
-import CommunityMock from '../components/CommunityMock';
+import { DiscussionList } from '../../discussions/components/DiscussionList';
+import { DiscussionDetail } from '../../discussions/components/DiscussionDetail';
+import { CreateDiscussionForm } from '../../discussions/components/CreateDiscussionForm';
 import { useStudentProblems } from '../hooks/useStudentProblems';
 import { useStreak } from '../hooks/useStreak';
+import { useClassExercises } from '../hooks/useClassExercises';
 import { ROUTES, getProblemRoute } from '../../../lib/routes';
 
 export default function StudentDashboardPage() {
@@ -18,15 +21,13 @@ export default function StudentDashboardPage() {
   const navigate = useNavigate();
   const { problems, loading, error, reload } = useStudentProblems();
   const { streak: streakData } = useStreak();
+  const { exercises: classExercises, loading: classExercisesLoading } = useClassExercises();
   const [view, setView] = useState<'home' | 'discover' | 'calendar' | 'profile' | 'community'>('home');
+  const [communityView, setCommunityView] = useState<'list' | 'detail' | 'create'>('list');
+  const [selectedDiscussionId, setSelectedDiscussionId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'practice' | 'class'>('practice');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-
-  const classExercises = [
-    { id: 'c1', date: '09.12.2025', topic: 'Addition', title: 'Zahlenraum bis 100', status: 'open' },
-    { id: 'c2', date: '11.12.2025', topic: 'Subtraktion', title: 'Kopfrechnen-Training', status: 'locked' },
-    { id: 'c3', date: '13.12.2025', topic: 'Geometrie', title: 'Formen und Figuren', status: 'locked' },
-  ];
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
   const problemsByOperation = useMemo(() => {
     const groups: Record<string, typeof problems> = {
@@ -243,55 +244,120 @@ export default function StudentDashboardPage() {
             ))}
           </div>
         )
+      ) : classExercisesLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+      ) : classExercises.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+          <p className="text-slate-600">Keine Klassenübungen vorhanden.</p>
+          <p className="text-sm text-slate-400 mt-1">Dein Lehrer hat noch keine Übungen erstellt.</p>
+        </div>
+      ) : selectedExercise ? (
+        <div className="space-y-4">
+          <button
+            onClick={() => setSelectedExercise(null)}
+            className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all hover:-translate-y-0.5 mb-6"
+          >
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </div>
+            <span className="text-lg">Zurück zu Klassenübungen</span>
+          </button>
+          {(() => {
+            const exercise = classExercises.find(e => e.id === selectedExercise);
+            if (!exercise) return null;
+            return (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-3 px-2 border-l-4 border-indigo-600 ml-1">
+                  {exercise.title}
+                </h3>
+                {exercise.description && (
+                  <p className="text-sm text-slate-600 mb-4 px-2">{exercise.description}</p>
+                )}
+                <ProblemList
+                  problems={exercise.problems || []}
+                  loading={false}
+                  error={null}
+                  onRetry={() => {}}
+                  onSelect={handleSelect}
+                />
+              </div>
+            );
+          })()}
+        </div>
       ) : (
         <div className="space-y-3">
-          {classExercises.map((exercise) => (
-            <div
-              key={exercise.id}
-              className={`flex items-center justify-between p-4 rounded-2xl border ${
-                exercise.status === 'open'
-                  ? 'bg-white border-slate-200 shadow-sm'
-                  : 'bg-slate-50 border-slate-100 opacity-75'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
-                    exercise.status === 'open'
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'bg-slate-200 text-slate-500'
-                  }`}
-                >
-                  {exercise.date.split('.')[0]}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      {exercise.topic}
-                    </span>
-                    <span className="text-xs text-slate-400">• {exercise.date}</span>
+          {classExercises.map((exercise) => {
+            const scheduledDate = new Date(exercise.scheduledAt);
+            const day = scheduledDate.getDate().toString().padStart(2, '0');
+            const month = (scheduledDate.getMonth() + 1).toString().padStart(2, '0');
+            const year = scheduledDate.getFullYear();
+            const formattedDate = `${day}.${month}.${year}`;
+            
+            return (
+              <div
+                key={exercise.id}
+                className={`flex items-center justify-between p-4 rounded-2xl border ${
+                  exercise.status === 'open'
+                    ? 'bg-white border-slate-200 shadow-sm'
+                    : 'bg-slate-50 border-slate-100 opacity-75'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
+                      exercise.status === 'open'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {day}
                   </div>
-                  <h3 className={`font-bold ${exercise.status === 'open' ? 'text-slate-900' : 'text-slate-600'}`}>
-                    {exercise.title}
-                  </h3>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        {exercise.topic}
+                      </span>
+                      <span className="text-xs text-slate-400">• {formattedDate}</span>
+                    </div>
+                    <h3 className={`font-bold ${exercise.status === 'open' ? 'text-slate-900' : 'text-slate-600'}`}>
+                      {exercise.title}
+                    </h3>
+                  </div>
                 </div>
+                
+                {exercise.status === 'open' ? (
+                  <button 
+                    onClick={() => setSelectedExercise(exercise.id)}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
+                  >
+                    Starten
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1 text-slate-400 px-4 py-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span className="text-sm font-medium">Gesperrt</span>
+                  </div>
+                )}
               </div>
-              
-              {exercise.status === 'open' ? (
-                <button className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
-                  Starten
-                </button>
-              ) : (
-                <div className="flex items-center gap-1 text-slate-400 px-4 py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                  <span className="text-sm font-medium">Gesperrt</span>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -299,7 +365,33 @@ export default function StudentDashboardPage() {
 
   let content: ReactNode = renderHome();
   if (view === 'discover') content = <DiscoverMock />;
-  if (view === 'community') content = <CommunityMock />;
+  if (view === 'community') {
+    if (communityView === 'list') {
+      content = (
+        <DiscussionList
+          onSelectDiscussion={(id) => {
+            setSelectedDiscussionId(id);
+            setCommunityView('detail');
+          }}
+          onCreateDiscussion={() => setCommunityView('create')}
+        />
+      );
+    } else if (communityView === 'detail' && selectedDiscussionId) {
+      content = (
+        <DiscussionDetail
+          discussionId={selectedDiscussionId}
+          onBack={() => setCommunityView('list')}
+        />
+      );
+    } else if (communityView === 'create') {
+      content = (
+        <CreateDiscussionForm
+          onBack={() => setCommunityView('list')}
+          onSuccess={() => setCommunityView('list')}
+        />
+      );
+    }
+  }
   if (view === 'calendar') content = <StudentCalendar streakData={streakData} />;
   if (view === 'profile')
     content = (
@@ -307,9 +399,23 @@ export default function StudentDashboardPage() {
         firstName={state.user?.firstName}
         lastName={state.user?.lastName}
         email={state.user?.email}
-        onLogout={handleLogout}
+        role={state.user?.role}
+        gender={state.user?.gender}
+        classGrade={state.user?.classGrade}
+        classLabel={state.user?.classLabel}
+        streak={streakData?.currentStreak}
+        xp={state.user?.xp}
+        solvedTasks={state.user?.solvedTasks}
       />
     );
+
+  const handleNavChange = (newView: typeof view) => {
+    setView(newView);
+    if (newView !== 'community') {
+      setCommunityView('list');
+      setSelectedDiscussionId(null);
+    }
+  };
 
   return (
     <StudentLayout
@@ -317,7 +423,8 @@ export default function StudentDashboardPage() {
       onLogout={handleLogout}
       streak={streakData?.currentStreak ?? 0}
       navActive={view}
-      onNavChange={setView}
+      onNavChange={handleNavChange}
+      gender={state.user?.gender}
     >
       {content}
     </StudentLayout>

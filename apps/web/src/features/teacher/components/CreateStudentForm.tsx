@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import type { CreateStudentRequest } from '../../../types/teacher';
+import type { Gender } from '../../../types/user';
 
 type FormValues = Omit<CreateStudentRequest, 'role'>;
 
@@ -26,6 +27,7 @@ export default function CreateStudentForm({
       lastName: '',
       classId: defaultClassId ?? '',
       grade: undefined,
+      gender: 'male' as Gender,
     },
   });
 
@@ -36,8 +38,9 @@ export default function CreateStudentForm({
       lastName: values.lastName || null,
       classId: values.classId || null,
       grade: values.grade ? Number(values.grade) : null,
+      gender: values.gender || 'male',
     });
-    reset({ ...values, classId: defaultClassId ?? '', grade: undefined });
+    reset({ ...values, classId: defaultClassId ?? '', grade: undefined, gender: 'male' });
   };
 
   return (
@@ -122,6 +125,18 @@ export default function CreateStudentForm({
           </select>
         </label>
       </div>
+
+      <label className="space-y-1 block">
+        <span className="text-sm font-semibold text-slate-700">Geschlecht</span>
+        <select
+          className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+          {...register('gender')}
+          defaultValue="male"
+        >
+          <option value="male">Männlich</option>
+          <option value="female">Weiblich</option>
+        </select>
+      </label>
 
       <div className="flex items-center gap-3 pt-2">
         <button

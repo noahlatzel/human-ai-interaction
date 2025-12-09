@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 import bcrypt
@@ -48,7 +48,7 @@ def create_access_token(
     is_guest: bool | None = None,
 ) -> tuple[str, datetime]:
     """Return a signed JWT access token and its expiry timestamp."""
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     expires = now + timedelta(minutes=settings.jwt_exp_minutes)
     guest_flag = user.is_guest if is_guest is None else is_guest
     payload: dict[str, Any] = {
@@ -76,7 +76,7 @@ def decode_access_token(token: str, settings: Settings) -> dict[str, Any]:
 def generate_refresh_token(settings: Settings) -> tuple[str, datetime]:
     """Return a refresh token value and expiry timestamp."""
     value = secrets.token_urlsafe(48)
-    expires = datetime.now(UTC) + timedelta(days=settings.jwt_refresh_exp_days)
+    expires = datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_exp_days)
     return value, expires
 
 

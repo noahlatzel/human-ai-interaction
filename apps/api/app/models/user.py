@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional, TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, format_timestamp, utcnow
@@ -14,6 +14,12 @@ if TYPE_CHECKING:
     from .classroom import Classroom
     from .session import UserSession
     from .learning import LearningSession
+    from .discussion import (
+        Discussion,
+        DiscussionReply,
+        DiscussionSubscription,
+        Notification,
+    )
 
 
 class User(Base):
@@ -33,6 +39,9 @@ class User(Base):
     class_id: Mapped[Optional[str]] = mapped_column(
         ForeignKey("classrooms.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    solved_tasks: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    gender: Mapped[str] = mapped_column(String(16), default="male", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False
     )
@@ -64,6 +73,27 @@ class User(Base):
         lazy="selectin",
     )
     learning_sessions: Mapped[list["LearningSession"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    
+    discussions: Mapped[list["Discussion"]] = relationship(
+        back_populates="author",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    discussion_replies: Mapped[list["DiscussionReply"]] = relationship(
+        back_populates="author",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    discussion_subscriptions: Mapped[list["DiscussionSubscription"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    notifications: Mapped[list["Notification"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",

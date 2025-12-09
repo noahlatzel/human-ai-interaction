@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import LearningSession
 
 
-@dataclass(slots=True)
+@dataclass
 class WeeklyActivityDay:
     """Single day in the weekly activity calendar."""
 
@@ -21,7 +21,7 @@ class WeeklyActivityDay:
     has_activity: bool
 
 
-@dataclass(slots=True)
+@dataclass
 class StreakResult:
     """Calculated streak statistics for a user."""
 
@@ -125,7 +125,7 @@ async def calculate_streak(
         StreakResult with current/longest streaks and weekly calendar
     """
     if now is None:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
     today = now.date()
 

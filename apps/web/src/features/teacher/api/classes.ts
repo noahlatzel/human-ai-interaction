@@ -4,7 +4,9 @@ import type {
   CreateStudentRequest,
   CreateStudentResponse,
   TeacherClass,
+  UpdateStudentRequest,
 } from '../../../types/teacher';
+import type { AuthUser } from '../../../types/auth';
 
 type CreateClassPayload = {
   grade: number;
@@ -30,6 +32,16 @@ export const addStudentToClass = (
   apiClient.post<CreateStudentResponse, CreateStudentRequest>(
     `/classes/${classId}/students`,
     { ...payload, role: 'student' },
+  );
+
+export const updateStudentInClass = (
+  classId: string,
+  studentId: string,
+  payload: UpdateStudentRequest,
+) =>
+  apiClient.patch<AuthUser, UpdateStudentRequest>(
+    `/classes/${classId}/students/${studentId}`,
+    payload,
   );
 
 export const deleteClassStudent = (classId: string, studentId: string) =>

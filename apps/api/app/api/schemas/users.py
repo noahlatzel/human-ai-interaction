@@ -23,6 +23,9 @@ class UserPayload(BaseModel):
     createdAt: str
     updatedAt: str
     isGuest: bool = False
+    xp: int = 0
+    solvedTasks: int = 0
+    gender: str = "male"
 
     @classmethod
     def from_model(cls, user: User) -> "UserPayload":
@@ -40,6 +43,9 @@ class UserPayload(BaseModel):
             createdAt=format_timestamp(user.created_at),
             updatedAt=format_timestamp(user.updated_at),
             isGuest=user.is_guest,
+            xp=user.xp,
+            solvedTasks=user.solved_tasks,
+            gender=user.gender,
         )
 
 
@@ -60,12 +66,25 @@ class UserCreateRequest(BaseModel):
         le=4,
         description="Grade required when classId is absent.",
     )
+    gender: Literal["male", "female"] = Field(default="male")
 
 
 class UserCreateResponse(BaseModel):
     """Response returned when creating a user via privileged endpoint."""
 
     user: UserPayload
+
+
+class UserUpdateRequest(BaseModel):
+    """Payload for updating user profile."""
+    
+    model_config = ConfigDict(populate_by_name=True)
+
+    email: str | None = None
+    password: str | None = None
+    first_name: str | None = Field(default=None, alias="firstName")
+    last_name: str | None = Field(default=None, alias="lastName")
+    gender: Literal["male", "female"] | None = None
 
 
 class UserListResponse(BaseModel):
@@ -78,5 +97,6 @@ __all__ = [
     "UserPayload",
     "UserCreateRequest",
     "UserCreateResponse",
+    "UserUpdateRequest",
     "UserListResponse",
 ]

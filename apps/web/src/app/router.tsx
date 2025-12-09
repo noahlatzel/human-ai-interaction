@@ -11,7 +11,7 @@ import TeacherLoginPage from '../features/auth/pages/TeacherLoginPage';
 import StudentDashboardPage from '../features/student/pages/StudentDashboardPage';
 import TeacherDashboardPage from '../features/teacher/pages/TeacherDashboardPage';
 import ProblemPage from '../features/problems/pages/ProblemPage';
-import AdminPlaceholderPage from '../features/admin/pages/AdminPlaceholderPage';
+import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
 import App from './App';
 
 const rawBasename = import.meta.env.BASE_URL ?? '/';
@@ -154,7 +154,7 @@ const router = createBrowserRouter([
         path: ROUTES.admin,
         element: (
           <RequireAuth allowedRoles={['admin']} allowGuest={false}>
-            <AdminPlaceholderPage />
+            <AdminDashboardPage />
           </RequireAuth>
         ),
       },

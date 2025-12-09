@@ -49,7 +49,6 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Human-AI Interaction Backend",
         lifespan=lifespan,
-        root_path=settings.root_path,
     )
     app.add_middleware(
         CORSMiddleware,

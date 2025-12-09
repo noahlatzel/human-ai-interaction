@@ -97,6 +97,13 @@ async def get_class_by_id(session: AsyncSession, class_id: str) -> Classroom | N
     return await session.get(Classroom, class_id)
 
 
+async def get_user_with_class(session: AsyncSession, user_id: str) -> User | None:
+    """Return a user by id with their class_id populated."""
+    if not user_id:
+        return None
+    return await session.get(User, user_id)
+
+
 async def get_teacher_class_by_id(
     session: AsyncSession,
     *,
@@ -185,6 +192,7 @@ __all__ = [
     "ensure_teacher_owns_class",
     "get_class_by_id",
     "get_teacher_class_by_id",
+    "get_user_with_class",
     "list_classes_for_teacher",
     "supported_grades",
 ]

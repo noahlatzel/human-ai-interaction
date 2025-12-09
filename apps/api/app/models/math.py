@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import (
     DateTime,
@@ -57,9 +58,9 @@ class MathWordProblem(Base):
         nullable=False,
     )
     grade: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    hint1: Mapped[str | None] = mapped_column(Text, nullable=True)
-    hint2: Mapped[str | None] = mapped_column(Text, nullable=True)
-    hint3: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hint1: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    hint2: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    hint3: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False
     )

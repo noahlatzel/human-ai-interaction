@@ -33,6 +33,7 @@ class RegisterRequest(BaseModel):
         le=4,
         description="Required for students when classId is not provided (3 or 4).",
     )
+    gender: Literal["male", "female"] = Field(default="male")
 
 
 class AuthSuccess(BaseModel):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import select
@@ -16,7 +16,7 @@ from app.services import learning, security
 
 def _now() -> datetime:
     """Return timezone-aware now."""
-    return datetime.now(UTC)
+    return datetime.now(timezone.utc)
 
 
 async def revoke_active_sessions(
@@ -75,8 +75,8 @@ async def create_user_session(
 def _normalize_ts(timestamp: datetime) -> datetime:
     """Ensure timestamps are timezone-aware UTC."""
     if timestamp.tzinfo is None:
-        return timestamp.replace(tzinfo=UTC)
-    return timestamp.astimezone(UTC)
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
 
 
 async def validate_session(
@@ -116,7 +116,7 @@ async def revoke_session_by_id(
     return record
 
 
-@dataclass(slots=True)
+@dataclass
 class SessionValidation:
     """Result of validating an opaque session."""
 

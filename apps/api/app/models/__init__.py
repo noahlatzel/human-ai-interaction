@@ -1,7 +1,14 @@
 """Models package exports."""
 
 from .base import Base, format_timestamp, utcnow
+from .class_exercise import ClassExercise, ExerciseStatus, ExerciseType
 from .classroom import Classroom, ClassType
+from .discussion import (
+    Discussion,
+    DiscussionReply,
+    DiscussionSubscription,
+    Notification,
+)
 from .learning import LearningSession
 from .math import (
     DifficultyLevel,
@@ -15,6 +22,9 @@ from .user import User, UserRefreshToken
 
 __all__ = [
     "Base",
+    "ClassExercise",
+    "ExerciseStatus",
+    "ExerciseType",
     "LearningSession",
     "MathWordProblem",
     "MathWordProblemOperation",
@@ -23,6 +33,10 @@ __all__ = [
     "MathWordProblemProgress",
     "Classroom",
     "ClassType",
+    "Discussion",
+    "DiscussionReply",
+    "DiscussionSubscription",
+    "Notification",
     "User",
     "UserRefreshToken",
     "UserSession",
