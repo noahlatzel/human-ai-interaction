@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -188,6 +188,7 @@ async def register(
         first_name=payload.first_name,
         last_name=payload.last_name,
         class_id=class_id,
+        gender=payload.gender,
     )
 
     learning_session = await learning.start_learning_session(session, user)
@@ -231,8 +232,8 @@ async def refresh_tokens(
 
     expires_at = record.expires_at
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=UTC)
-    if expires_at <= datetime.now(UTC):
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at <= datetime.now(timezone.utc):
         await user_store.delete_refresh_token(session, payload.refreshToken)
         await session.commit()
         raise HTTPException(

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../auth/hooks/useAuth';
 import ProblemHeader from '../components/ProblemHeader';
 import ProblemStatement from '../components/ProblemStatement';
 import ScratchPadCanvas from '../components/ScratchPadCanvas';
@@ -22,6 +23,7 @@ export default function ProblemPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
+  const { reloadUser } = useAuth();
 
   const [textAnswer, setTextAnswer] = useState('');
   const [, setSketch] = useState<string | null>(null);
@@ -57,6 +59,9 @@ export default function ProblemPage() {
     try {
       const success = normalize(textAnswer) === normalize(problem.solution);
       await submitProgress({ mathWordProblemId: problem.id, success });
+      if (success) {
+        await reloadUser();
+      }
       toast.success(success ? 'Richtig! Fortschritt gespeichert.' : 'Gespeichert, aber Lösung prüfen.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Konnte Fortschritt nicht speichern';

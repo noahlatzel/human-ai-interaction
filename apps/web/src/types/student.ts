@@ -1,3 +1,5 @@
+import type { Gender } from './user';
+
 export interface StudentProgressSummary {
   studentId: string;
   firstName?: string | null;
@@ -8,6 +10,7 @@ export interface StudentProgressSummary {
   solved: number;
   totalProblems: number;
   completionRate: number;
+  gender?: Gender;
 }
 
 export interface ProgressSummaryResponse {

@@ -47,7 +47,7 @@ export default function ProgressCard({ streakData }: ProgressCardProps) {
         </div>
         <div className="flex items-center gap-2 rounded-2xl bg-orange-50 border border-orange-100 px-4 py-2 text-orange-700 font-semibold">
           <span aria-hidden>🔥</span>
-          <span>{currentStreak} Tage</span>
+          <span>{currentStreak} {currentStreak === 1 ? 'Tag' : 'Tage'}</span>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-2">

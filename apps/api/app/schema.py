@@ -8,7 +8,7 @@ from typing import Any, Mapping, Optional
 from app.models import User
 
 
-@dataclass(slots=True)
+@dataclass
 class AuthContext:
     """Authenticated user context extracted from an access token."""
 

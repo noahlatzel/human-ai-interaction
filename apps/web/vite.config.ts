@@ -14,6 +14,7 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
+        // Strip /haii/api prefix before forwarding to backend
         rewrite: (path) => path.replace(/^\/haii\/api/, ''),
       },
     },

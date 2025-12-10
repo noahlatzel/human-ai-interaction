@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,25 +24,26 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     role: Literal["teacher", "student"]
-    first_name: str | None = Field(default=None, alias="firstName")
-    last_name: str | None = Field(default=None, alias="lastName")
-    class_id: str | None = Field(default=None, alias="classId")
-    grade: int | None = Field(
+    first_name: Optional[str] = Field(default=None, alias="firstName")
+    last_name: Optional[str] = Field(default=None, alias="lastName")
+    class_id: Optional[str] = Field(default=None, alias="classId")
+    grade: Optional[int] = Field(
         default=None,
         ge=3,
         le=4,
         description="Required for students when classId is not provided (3 or 4).",
     )
+    gender: Literal["male", "female"] = Field(default="male")
 
 
 class AuthSuccess(BaseModel):
     """Response returned when authentication succeeds."""
 
     accessToken: str
-    refreshToken: str | None = None
+    refreshToken: Optional[str] = None
     expiresIn: int
-    sessionId: str | None = None
-    learningSessionId: str | None = None
+    sessionId: Optional[str] = None
+    learningSessionId: Optional[str] = None
     user: UserPayload
 
 
@@ -64,7 +65,7 @@ class RefreshResponse(BaseModel):
 class LogoutRequest(BaseModel):
     """Payload describing the refresh token to invalidate."""
 
-    refreshToken: str | None = None
+    refreshToken: Optional[str] = None
 
 
 class GuestLoginRequest(BaseModel):

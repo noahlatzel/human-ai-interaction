@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
@@ -44,6 +44,7 @@ async def create_user(
     last_name: str | None = None,
     class_id: str | None = None,
     is_guest: bool = False,
+    gender: str = "male",
 ) -> User:
     """Create a new user with a hashed password."""
     normalized_email = _normalize_email(email)
@@ -57,6 +58,7 @@ async def create_user(
         first_name=first_name,
         last_name=last_name,
         class_id=class_id,
+        gender=gender,
     )
     session.add(user)
     await session.flush()
@@ -79,11 +81,38 @@ async def ensure_admin_user(session: AsyncSession, settings: Settings) -> User:
     )
 
 
+async def update_user(
+    session: AsyncSession,
+    user: User,
+    *,
+    settings: Settings,
+    email: str | None = None,
+    password: str | None = None,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    gender: str | None = None,
+) -> User:
+    """Update user fields. Only non-None values are applied."""
+    if email is not None:
+        user.email = _normalize_email(email)
+    if password is not None:
+        user.password_hash = security.hash_password(password, settings)
+    if first_name is not None:
+        user.first_name = first_name
+    if last_name is not None:
+        user.last_name = last_name
+    if gender is not None:
+        user.gender = gender
+    user.updated_at = datetime.now(timezone.utc)
+    await session.flush()
+    return user
+
+
 async def touch_user_timestamp(session: AsyncSession, user_id: str) -> None:
     """Update the user's updated_at column."""
     user = await session.get(User, user_id)
     if user:
-        user.updated_at = datetime.now(UTC)
+        user.updated_at = datetime.now(timezone.utc)
 
 
 async def create_refresh_token(
@@ -94,7 +123,7 @@ async def create_refresh_token(
 ) -> UserRefreshToken:
     """Persist a hashed refresh token for the user."""
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=UTC)
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
     hashed = security.hash_refresh_token(refresh_token)
     record = UserRefreshToken(user_id=user.id, token_hash=hashed, expires_at=expires_at)
     session.add(record)

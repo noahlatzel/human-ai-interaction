@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, cast
+from typing import Literal, Optional, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,16 +13,19 @@ class UserPayload(BaseModel):
     """Public user information returned to clients."""
 
     id: str
-    email: str | None = None
+    email: Optional[str] = None
     role: Literal["admin", "teacher", "student"]
-    firstName: str | None = None
-    lastName: str | None = None
-    classId: str | None = None
-    classGrade: int | None = None
-    classLabel: str | None = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    classId: Optional[str] = None
+    classGrade: Optional[int] = None
+    classLabel: Optional[str] = None
     createdAt: str
     updatedAt: str
     isGuest: bool = False
+    xp: int = 0
+    solvedTasks: int = 0
+    gender: str = "male"
 
     @classmethod
     def from_model(cls, user: User) -> "UserPayload":
@@ -40,6 +43,9 @@ class UserPayload(BaseModel):
             createdAt=format_timestamp(user.created_at),
             updatedAt=format_timestamp(user.updated_at),
             isGuest=user.is_guest,
+            xp=user.xp,
+            solvedTasks=user.solved_tasks,
+            gender=user.gender,
         )
 
 
@@ -51,21 +57,34 @@ class UserCreateRequest(BaseModel):
     email: str
     password: str
     role: Literal["teacher", "student"]
-    first_name: str | None = Field(default=None, alias="firstName")
-    last_name: str | None = Field(default=None, alias="lastName")
-    class_id: str | None = Field(default=None, alias="classId")
-    grade: int | None = Field(
+    first_name: Optional[str] = Field(default=None, alias="firstName")
+    last_name: Optional[str] = Field(default=None, alias="lastName")
+    class_id: Optional[str] = Field(default=None, alias="classId")
+    grade: Optional[int] = Field(
         default=None,
         ge=3,
         le=4,
         description="Grade required when classId is absent.",
     )
+    gender: Literal["male", "female"] = Field(default="male")
 
 
 class UserCreateResponse(BaseModel):
     """Response returned when creating a user via privileged endpoint."""
 
     user: UserPayload
+
+
+class UserUpdateRequest(BaseModel):
+    """Payload for updating user profile."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    email: Optional[str] = None
+    password: Optional[str] = None
+    first_name: Optional[str] = Field(default=None, alias="firstName")
+    last_name: Optional[str] = Field(default=None, alias="lastName")
+    gender: Optional[Literal["male", "female"]] = None
 
 
 class UserListResponse(BaseModel):
@@ -78,5 +97,6 @@ __all__ = [
     "UserPayload",
     "UserCreateRequest",
     "UserCreateResponse",
+    "UserUpdateRequest",
     "UserListResponse",
 ]

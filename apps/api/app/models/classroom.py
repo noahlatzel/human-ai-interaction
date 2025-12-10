@@ -47,7 +47,7 @@ class Classroom(Base):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    teacher_id: Mapped[str | None] = mapped_column(
+    teacher_id: Mapped[Optional[str]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     grade: Mapped[int] = mapped_column(Integer, nullable=False)

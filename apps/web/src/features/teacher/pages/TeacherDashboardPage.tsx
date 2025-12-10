@@ -6,6 +6,8 @@ import { ROUTES } from '../../../lib/routes';
 import TeacherLayout from '../components/TeacherLayout';
 import StudentTable from '../components/StudentTable';
 import CreateStudentForm from '../components/CreateStudentForm';
+import ClassExerciseList from '../components/ClassExerciseList';
+import CreateClassExerciseForm from '../components/CreateClassExerciseForm';
 import ProblemList from '../components/ProblemList';
 import ProblemForm from '../components/ProblemForm';
 import { useTeacherDashboard } from '../hooks/useTeacherDashboard';
@@ -19,9 +21,11 @@ export default function TeacherDashboardPage() {
     students,
     totalProblems,
     problems,
+    exercises,
     loadingClasses,
     loadingStudents,
     problemsLoading,
+    exercisesLoading,
     classError,
     studentError,
     problemError,
@@ -29,18 +33,23 @@ export default function TeacherDashboardPage() {
     refreshClasses,
     refreshStudents,
     refreshProblems,
+    refreshExercises,
     createClass,
     createStudent,
     deleteStudent,
     toggleGroup,
+    updateStudentGender,
     createProblem,
     deleteProblem,
+    createExercise,
+    deleteExercise,
   } = useTeacherDashboard();
 
   const [activeTab, setActiveTab] = useState<'classes' | 'problems'>('classes');
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [showProblemForm, setShowProblemForm] = useState(false);
   const [showClassForm, setShowClassForm] = useState(false);
+  const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [submittingStudent, setSubmittingStudent] = useState(false);
   const [submittingProblem, setSubmittingProblem] = useState(false);
   const [creatingClass, setCreatingClass] = useState(false);
@@ -58,7 +67,7 @@ export default function TeacherDashboardPage() {
   const handleRefresh = async () => {
     await Promise.all([refreshClasses(), refreshProblems()]);
     if (selectedClassId) {
-      await refreshStudents(selectedClassId);
+      await Promise.all([refreshStudents(selectedClassId), refreshExercises(selectedClassId)]);
     }
     toast.success('Aktualisiert');
   };
@@ -105,6 +114,27 @@ export default function TeacherDashboardPage() {
       toast.error(message);
     } finally {
       setSubmittingProblem(false);
+    }
+  };
+
+  const handleCreateExercise = async (values: Parameters<typeof createExercise>[0]) => {
+    try {
+      await createExercise(values);
+      toast.success('Übung erstellt');
+      setShowExerciseForm(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Erstellen';
+      toast.error(message);
+    }
+  };
+
+  const handleDeleteExercise = async (id: string) => {
+    try {
+      await deleteExercise(id);
+      toast.success('Übung gelöscht');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Löschen fehlgeschlagen';
+      toast.error(message);
     }
   };
 
@@ -323,8 +353,28 @@ export default function TeacherDashboardPage() {
               ) : (
                 <StudentTable
                   students={students}
+                  classId={selectedClassId!}
                   onToggleGroup={toggleGroup}
                   onDelete={handleDeleteStudent}
+                  onUpdateGender={updateStudentGender}
+                />
+              )}
+
+              <div className="border-t border-slate-200 my-8"></div>
+
+              {showExerciseForm ? (
+                <CreateClassExerciseForm
+                  classId={selectedClassId!}
+                  availableProblems={problems}
+                  onSubmit={handleCreateExercise}
+                  onCancel={() => setShowExerciseForm(false)}
+                />
+              ) : (
+                <ClassExerciseList
+                  exercises={exercises}
+                  loading={exercisesLoading}
+                  onCreate={() => setShowExerciseForm(true)}
+                  onDelete={handleDeleteExercise}
                 />
               )}
             </div>

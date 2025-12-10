@@ -29,6 +29,7 @@ import { login } from '../../features/auth/api/login';
 import { logout as logoutRequest } from '../../features/auth/api/logout';
 import { refresh as refreshRequest } from '../../features/auth/api/refresh';
 import { registerUser } from '../../features/auth/api/register';
+import { getUser } from '../../features/auth/api/user';
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -52,6 +53,7 @@ type AuthContextValue = {
   registerTeacher: (payload: Omit<RegisterRequest, 'role'>) => Promise<AuthUser>;
   guestLogin: (payload: GuestLoginRequest) => Promise<AuthUser>;
   refresh: () => Promise<AuthUser | null>;
+  reloadUser: () => Promise<AuthUser | null>;
   logout: () => Promise<void>;
 };
 
@@ -253,6 +255,19 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [applyAuthSuccess, clearAuth, handleAuthError]);
 
+  const reloadUser = useCallback(async () => {
+    if (!state.accessToken) return null;
+    try {
+      const user = await getUser();
+      setStoredUser(user);
+      setState((prev) => ({ ...prev, user }));
+      return user;
+    } catch (error) {
+      console.error('Failed to reload user', error);
+      return null;
+    }
+  }, [state.accessToken]);
+
   const logout = useCallback(async () => {
     const refreshToken = getRefreshToken();
     try {
@@ -279,9 +294,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       registerTeacher,
       guestLogin: loginAsGuest,
       refresh: refreshSession,
+      reloadUser,
       logout,
     };
-  }, [loginAsGuest, loginUser, logout, refreshSession, registerStudent, registerTeacher, state]);
+  }, [loginAsGuest, loginUser, logout, refreshSession, reloadUser, registerStudent, registerTeacher, state]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'teacher' | 'student';
+export type Gender = 'male' | 'female';
 
 export interface AuthUser {
   id: string;
@@ -12,4 +13,7 @@ export interface AuthUser {
   createdAt: string;
   updatedAt: string;
   isGuest?: boolean;
+  xp?: number;
+  solvedTasks?: number;
+  gender?: Gender;
 }

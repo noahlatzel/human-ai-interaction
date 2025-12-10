@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import select
@@ -16,7 +16,7 @@ from app.services import learning, security
 
 def _now() -> datetime:
     """Return timezone-aware now."""
-    return datetime.now(UTC)
+    return datetime.now(timezone.utc)
 
 
 async def revoke_active_sessions(
@@ -39,9 +39,9 @@ def _rolling_expiry(settings: Settings, absolute_expires_at: datetime) -> dateti
     """Compute next rolling expiry capped by the absolute expiry."""
     next_expiry = _now() + timedelta(hours=settings.session_ttl_hours)
     if next_expiry.tzinfo is None:
-        next_expiry = next_expiry.replace(tzinfo=UTC)
+        next_expiry = next_expiry.replace(tzinfo=timezone.utc)
     if absolute_expires_at.tzinfo is None:
-        absolute_expires_at = absolute_expires_at.replace(tzinfo=UTC)
+        absolute_expires_at = absolute_expires_at.replace(tzinfo=timezone.utc)
     return min(next_expiry, absolute_expires_at)
 
 
@@ -75,8 +75,8 @@ async def create_user_session(
 def _normalize_ts(timestamp: datetime) -> datetime:
     """Ensure timestamps are timezone-aware UTC."""
     if timestamp.tzinfo is None:
-        return timestamp.replace(tzinfo=UTC)
-    return timestamp.astimezone(UTC)
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
 
 
 async def validate_session(
@@ -116,7 +116,7 @@ async def revoke_session_by_id(
     return record
 
 
-@dataclass(slots=True)
+@dataclass
 class SessionValidation:
     """Result of validating an opaque session."""
 

@@ -4,7 +4,9 @@ import type {
   CreateStudentRequest,
   CreateStudentResponse,
   TeacherClass,
+  UpdateStudentRequest,
 } from '../../../types/teacher';
+// Removed unused AuthUser type, backend returns UserPayload
 
 type CreateClassPayload = {
   grade: number;
@@ -30,6 +32,16 @@ export const addStudentToClass = (
   apiClient.post<CreateStudentResponse, CreateStudentRequest>(
     `/classes/${classId}/students`,
     { ...payload, role: 'student' },
+  );
+
+export const updateStudentInClass = (
+  classId: string,
+  studentId: string,
+  payload: UpdateStudentRequest,
+) =>
+  apiClient.patch<CreateStudentResponse, UpdateStudentRequest>(
+    `/classes/${classId}/students/${studentId}`,
+    payload,
   );
 
 export const deleteClassStudent = (classId: string, studentId: string) =>

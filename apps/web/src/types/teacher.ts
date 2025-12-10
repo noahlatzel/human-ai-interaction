@@ -1,4 +1,4 @@
-import type { AuthUser } from './user';
+import type { AuthUser, Gender } from './user';
 
 export interface CreateStudentRequest {
   email: string;
@@ -8,6 +8,15 @@ export interface CreateStudentRequest {
   lastName?: string | null;
   classId?: string | null;
   grade?: number | null;
+  gender?: Gender;
+}
+
+export interface UpdateStudentRequest {
+  email?: string | null;
+  password?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  gender?: Gender | null;
 }
 
 export interface CreateStudentResponse {

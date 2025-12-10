@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast
+from typing import cast, Optional
 from uuid import uuid4
 
 from sqlalchemy import case, func, select
@@ -18,16 +18,16 @@ from app.models import (
 )
 
 
-@dataclass(slots=True)
+@dataclass
 class StudentProgressStats:
     """Aggregate progress for a single student."""
 
     student_id: str
-    first_name: str | None
-    last_name: str | None
-    class_id: str | None
-    class_grade: int | None
-    class_label: str | None
+    first_name: Optional[str]
+    last_name: Optional[str]
+    class_id: Optional[str]
+    class_grade: Optional[int]
+    class_label: Optional[str]
     solved: int
     total_problems: int
 
@@ -39,7 +39,7 @@ class StudentProgressStats:
         return float(self.solved) / float(self.total_problems)
 
 
-@dataclass(slots=True)
+@dataclass
 class ProgressSummary:
     """Overall progress summary for a cohort of students."""
 
@@ -62,17 +62,46 @@ async def set_progress(
     result = await session.execute(stmt)
     record = result.scalar_one_or_none()
 
+    # Check if it was already solved to avoid double counting XP
+    was_already_solved = record is not None and record.success
+
     if record:
         record.success = success
-        return record
+    else:
+        record = MathWordProblemProgress(
+            id=str(uuid4()),
+            math_word_problem_id=problem_id,
+            student_id=student_id,
+            success=success,
+        )
+        session.add(record)
 
-    record = MathWordProblemProgress(
-        id=str(uuid4()),
-        math_word_problem_id=problem_id,
-        student_id=student_id,
-        success=success,
-    )
-    session.add(record)
+    # If newly solved (success=True and wasn't already solved), award XP
+    if success and not was_already_solved:
+        # Fetch problem to get difficulty
+        problem_stmt = select(MathWordProblem).where(MathWordProblem.id == problem_id)
+        problem_result = await session.execute(problem_stmt)
+        problem = problem_result.scalar_one_or_none()
+
+        if problem:
+            # Fetch user to update stats
+            user_stmt = select(User).where(User.id == student_id)
+            user_result = await session.execute(user_stmt)
+            user = user_result.scalar_one_or_none()
+
+            if user:
+                user.solved_tasks += 1
+
+                # Calculate XP based on difficulty
+                xp_gain = 10  # Default/Einfach
+                if str(problem.difficulty) == "mittel":
+                    xp_gain = 20
+                elif str(problem.difficulty) == "schwierig":
+                    xp_gain = 30
+
+                user.xp += xp_gain
+                session.add(user)
+
     await session.flush()
     await session.refresh(record)
     return record

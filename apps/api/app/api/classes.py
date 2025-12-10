@@ -17,7 +17,12 @@ from .schemas.classes import (
     ClassPayload,
     ClassStudentsResponse,
 )
-from .schemas.users import UserCreateRequest, UserCreateResponse, UserPayload
+from .schemas.users import (
+    UserCreateRequest,
+    UserCreateResponse,
+    UserPayload,
+    UserUpdateRequest,
+)
 
 router = APIRouter(prefix="/classes", tags=["classes"])
 
@@ -121,6 +126,7 @@ async def add_student_to_class(
         first_name=payload.first_name,
         last_name=payload.last_name,
         class_id=classroom.id,
+        gender=payload.gender,
     )
     await session.commit()
     return UserCreateResponse(user=UserPayload.from_model(user))
@@ -154,6 +160,55 @@ async def delete_student_from_class(
     await session.delete(student)
     await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch(
+    "/{class_id}/students/{student_id}",
+    response_model=UserPayload,
+)
+async def update_student_in_class(
+    class_id: str,
+    student_id: str,
+    payload: UserUpdateRequest,
+    session: AsyncSession = Depends(get_db_session),
+    settings: Settings = Depends(get_app_settings),
+    actor: AuthContext = Depends(require_roles("teacher")),
+) -> UserPayload:
+    """Update a student in a class the teacher owns."""
+    classroom = await class_store.get_teacher_class_by_id(
+        session, class_id=class_id, teacher_id=actor.uid
+    )
+    if classroom is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Class not found"
+        )
+
+    student = await user_store.get_user_by_id(session, student_id)
+    if student is None or student.role != "student" or student.class_id != classroom.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
+        )
+
+    # Check for email conflict if updating email
+    if payload.email:
+        existing = await user_store.get_user_by_email(session, payload.email)
+        if existing and existing.id != student_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
+            )
+
+    updated_student = await user_store.update_user(
+        session,
+        user=student,
+        settings=settings,
+        email=payload.email,
+        password=payload.password,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        gender=payload.gender,
+    )
+    await session.commit()
+    return UserPayload.from_model(updated_student)
 
 
 __all__ = ["router"]
