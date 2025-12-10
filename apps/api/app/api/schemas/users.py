@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, cast
+from typing import Literal, Optional, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,13 +13,13 @@ class UserPayload(BaseModel):
     """Public user information returned to clients."""
 
     id: str
-    email: str | None = None
+    email: Optional[str] = None
     role: Literal["admin", "teacher", "student"]
-    firstName: str | None = None
-    lastName: str | None = None
-    classId: str | None = None
-    classGrade: int | None = None
-    classLabel: str | None = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    classId: Optional[str] = None
+    classGrade: Optional[int] = None
+    classLabel: Optional[str] = None
     createdAt: str
     updatedAt: str
     isGuest: bool = False
@@ -57,10 +57,10 @@ class UserCreateRequest(BaseModel):
     email: str
     password: str
     role: Literal["teacher", "student"]
-    first_name: str | None = Field(default=None, alias="firstName")
-    last_name: str | None = Field(default=None, alias="lastName")
-    class_id: str | None = Field(default=None, alias="classId")
-    grade: int | None = Field(
+    first_name: Optional[str] = Field(default=None, alias="firstName")
+    last_name: Optional[str] = Field(default=None, alias="lastName")
+    class_id: Optional[str] = Field(default=None, alias="classId")
+    grade: Optional[int] = Field(
         default=None,
         ge=3,
         le=4,
@@ -80,11 +80,11 @@ class UserUpdateRequest(BaseModel):
     
     model_config = ConfigDict(populate_by_name=True)
 
-    email: str | None = None
-    password: str | None = None
-    first_name: str | None = Field(default=None, alias="firstName")
-    last_name: str | None = Field(default=None, alias="lastName")
-    gender: Literal["male", "female"] | None = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+    first_name: Optional[str] = Field(default=None, alias="firstName")
+    last_name: Optional[str] = Field(default=None, alias="lastName")
+    gender: Optional[Literal["male", "female"]] = None
 
 
 class UserListResponse(BaseModel):

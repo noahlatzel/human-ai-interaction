@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
@@ -103,7 +103,7 @@ async def update_user(
         user.last_name = last_name
     if gender is not None:
         user.gender = gender
-    user.updated_at = datetime.now(UTC)
+    user.updated_at = datetime.now(timezone.utc)
     await session.flush()
     return user
 
@@ -112,7 +112,7 @@ async def touch_user_timestamp(session: AsyncSession, user_id: str) -> None:
     """Update the user's updated_at column."""
     user = await session.get(User, user_id)
     if user:
-        user.updated_at = datetime.now(UTC)
+        user.updated_at = datetime.now(timezone.utc)
 
 
 async def create_refresh_token(
@@ -123,7 +123,7 @@ async def create_refresh_token(
 ) -> UserRefreshToken:
     """Persist a hashed refresh token for the user."""
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=UTC)
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
     hashed = security.hash_refresh_token(refresh_token)
     record = UserRefreshToken(user_id=user.id, token_hash=hashed, expires_at=expires_at)
     session.add(record)
