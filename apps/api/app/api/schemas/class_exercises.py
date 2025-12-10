@@ -42,9 +42,7 @@ class ClassExercisePayload(BaseModel):
             exerciseType=exercise.exercise_type,
             createdAt=format_timestamp(exercise.created_at),
             updatedAt=format_timestamp(exercise.updated_at),
-            problems=[
-                MathWordProblemPayload.from_model(p) for p in exercise.problems
-            ],
+            problems=[MathWordProblemPayload.from_model(p) for p in exercise.problems],
         )
 
 

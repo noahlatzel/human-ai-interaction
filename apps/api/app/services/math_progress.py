@@ -82,23 +82,23 @@ async def set_progress(
         problem_stmt = select(MathWordProblem).where(MathWordProblem.id == problem_id)
         problem_result = await session.execute(problem_stmt)
         problem = problem_result.scalar_one_or_none()
-        
+
         if problem:
             # Fetch user to update stats
             user_stmt = select(User).where(User.id == student_id)
             user_result = await session.execute(user_stmt)
             user = user_result.scalar_one_or_none()
-            
+
             if user:
                 user.solved_tasks += 1
-                
+
                 # Calculate XP based on difficulty
                 xp_gain = 10  # Default/Einfach
                 if str(problem.difficulty) == "mittel":
                     xp_gain = 20
                 elif str(problem.difficulty) == "schwierig":
                     xp_gain = 30
-                
+
                 user.xp += xp_gain
                 session.add(user)
 

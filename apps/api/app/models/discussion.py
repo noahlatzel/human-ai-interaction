@@ -38,7 +38,9 @@ class Discussion(Base):
         "DiscussionReply", back_populates="discussion", cascade="all, delete-orphan"
     )
     subscriptions: Mapped[list["DiscussionSubscription"]] = relationship(
-        "DiscussionSubscription", back_populates="discussion", cascade="all, delete-orphan"
+        "DiscussionSubscription",
+        back_populates="discussion",
+        cascade="all, delete-orphan",
     )
 
 
@@ -59,7 +61,9 @@ class DiscussionReply(Base):
         DateTime, default=utcnow, nullable=False
     )
 
-    discussion: Mapped["Discussion"] = relationship("Discussion", back_populates="replies")
+    discussion: Mapped["Discussion"] = relationship(
+        "Discussion", back_populates="replies"
+    )
     author: Mapped["User"] = relationship("User", back_populates="discussion_replies")
 
 
@@ -79,8 +83,12 @@ class DiscussionSubscription(Base):
         DateTime, default=utcnow, nullable=False
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="discussion_subscriptions")
-    discussion: Mapped["Discussion"] = relationship("Discussion", back_populates="subscriptions")
+    user: Mapped["User"] = relationship(
+        "User", back_populates="discussion_subscriptions"
+    )
+    discussion: Mapped["Discussion"] = relationship(
+        "Discussion", back_populates="subscriptions"
+    )
 
     __table_args__ = (
         UniqueConstraint("user_id", "discussion_id", name="unique_user_discussion"),

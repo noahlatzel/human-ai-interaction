@@ -14,16 +14,18 @@ router = APIRouter()
 async def get_notifications(
     unread_only: bool = False,
     db: AsyncSession = Depends(get_db_session),
-    auth_context: AuthContext = Depends(get_current_user)
+    auth_context: AuthContext = Depends(get_current_user),
 ):
     """Get user's notifications"""
-    return await crud.get_user_notifications(db, user_id=auth_context.user.id, unread_only=unread_only)
+    return await crud.get_user_notifications(
+        db, user_id=auth_context.user.id, unread_only=unread_only
+    )
 
 
 @router.get("/unread-count")
 async def get_unread_count(
     db: AsyncSession = Depends(get_db_session),
-    auth_context: AuthContext = Depends(get_current_user)
+    auth_context: AuthContext = Depends(get_current_user),
 ):
     """Get count of unread notifications"""
     count = await crud.get_unread_count(db, user_id=auth_context.user.id)

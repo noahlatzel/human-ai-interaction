@@ -20,7 +20,7 @@ class DiscussionAuthor(BaseModel):
     last_name: Optional[str]
     role: str
     gender: str = "male"
-    
+
     class Config:
         from_attributes = True
 
@@ -38,7 +38,7 @@ class DiscussionReply(DiscussionReplyBase):
     discussion_id: int
     author: DiscussionAuthor
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -50,14 +50,14 @@ class Discussion(DiscussionBase):
     updated_at: Optional[datetime]
     reply_count: int = 0
     is_subscribed: bool = False
-    
+
     class Config:
         from_attributes = True
 
 
 class DiscussionDetail(Discussion):
     replies: List[DiscussionReply] = []
-    
+
     class Config:
         from_attributes = True
 
@@ -73,7 +73,7 @@ class Notification(NotificationBase):
     id: int
     is_read: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

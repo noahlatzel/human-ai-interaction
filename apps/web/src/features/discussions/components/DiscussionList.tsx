@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { discussionApi } from '../api';
 import type { Discussion } from '../types';
 import { MessageSquare, Plus } from 'lucide-react';
@@ -70,19 +70,7 @@ export function DiscussionList({ onSelectDiscussion, onCreateDiscussion }: Discu
     loadDiscussions();
   }, [loadDiscussions]);
 
-  const loadDiscussions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await discussionApi.getDiscussions(category);
-      setDiscussions(data);
-    } catch (error) {
-      console.error('Failed to load discussions:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load discussions');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // removed duplicate loadDiscussions
 
   return (
     <div className="space-y-6">

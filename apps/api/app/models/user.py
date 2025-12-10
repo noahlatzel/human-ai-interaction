@@ -77,7 +77,7 @@ class User(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     discussions: Mapped[list["Discussion"]] = relationship(
         back_populates="author",
         cascade="all, delete-orphan",

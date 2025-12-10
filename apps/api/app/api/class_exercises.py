@@ -14,7 +14,10 @@ from .schemas.class_exercises import (
     ClassExercisePayload,
     ClassExerciseUpdateRequest,
 )
-from .schemas.math_word_problems import MathWordProblemPayload, MathWordProblemListResponse
+from .schemas.math_word_problems import (
+    MathWordProblemPayload,
+    MathWordProblemListResponse,
+)
 
 router = APIRouter(prefix="/class-exercises", tags=["class-exercises"])
 
@@ -36,7 +39,7 @@ async def list_exercises(
             session, user.class_id, exercise_type=exerciseType
         )
         return [ClassExercisePayload.from_model(e) for e in exercises]
-    
+
     elif actor.role == "teacher":
         if not classId:
             raise HTTPException(
@@ -51,12 +54,12 @@ async def list_exercises(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Class not found"
             )
-        
+
         exercises = await class_exercise.get_exercises_for_class(
             session, classId, exercise_type=exerciseType
         )
         return [ClassExercisePayload.from_model(e) for e in exercises]
-    
+
     return []
 
 
@@ -71,18 +74,22 @@ async def get_homework_problems(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only students can access homework problems",
         )
-    
+
     user = await class_store.get_user_with_class(session, actor.uid)
     if not user or not user.class_id:
         return MathWordProblemListResponse(problems=[])
-    
-    problems = await class_exercise.get_homework_problems_for_class(session, user.class_id)
+
+    problems = await class_exercise.get_homework_problems_for_class(
+        session, user.class_id
+    )
     return MathWordProblemListResponse(
         problems=[MathWordProblemPayload.from_model(p) for p in problems]
     )
 
 
-@router.post("", response_model=ClassExercisePayload, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ClassExercisePayload, status_code=status.HTTP_201_CREATED
+)
 async def create_exercise(
     payload: ClassExerciseCreateRequest,
     session: AsyncSession = Depends(get_db_session),
@@ -130,10 +137,14 @@ async def get_exercise(
     if actor.role == "student":
         user = await class_store.get_user_with_class(session, actor.uid)
         if not user or user.class_id != exercise.class_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+            )
     elif actor.role == "teacher":
         if exercise.teacher_id != actor.uid:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+            )
 
     return ClassExercisePayload.from_model(exercise)
 

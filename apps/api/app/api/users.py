@@ -10,7 +10,12 @@ from app.config import Settings
 from app.dependencies import get_app_settings, get_db_session
 from app.models import ClassType
 from app.services import class_store, user_store
-from .schemas.users import UserCreateRequest, UserCreateResponse, UserPayload, UserUpdateRequest
+from .schemas.users import (
+    UserCreateRequest,
+    UserCreateResponse,
+    UserPayload,
+    UserUpdateRequest,
+)
 
 router = APIRouter()
 
@@ -23,7 +28,9 @@ async def get_me(
     """Get the current user's profile."""
     user = await user_store.get_user_by_id(session, actor.uid)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return UserPayload.from_model(user)
 
 
@@ -44,7 +51,9 @@ async def update_me(
 
     user = await user_store.get_user_by_id(session, actor.uid)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     updated_user = await user_store.update_user(
         session,

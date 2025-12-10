@@ -1,5 +1,6 @@
 import sqlite3
 
+
 def fix_user_xp():
     db_path = "auth.db"
     conn = sqlite3.connect(db_path)
@@ -9,7 +10,7 @@ def fix_user_xp():
     cursor.execute("PRAGMA table_info(users)")
     columns = cursor.fetchall()
     column_names = [col[1] for col in columns]
-    
+
     if "xp" not in column_names:
         print("Adding missing 'xp' column to users table...")
         try:
@@ -23,6 +24,7 @@ def fix_user_xp():
         print("'xp' column already exists in users table.")
 
     conn.close()
+
 
 if __name__ == "__main__":
     fix_user_xp()

@@ -65,7 +65,7 @@ async def create_exercise(
         status=ExerciseStatus.OPEN,  # Default to open for now, or logic based on date
         exercise_type=exercise_type,
     )
-    
+
     if problem_ids:
         stmt = select(MathWordProblem).where(MathWordProblem.id.in_(problem_ids))
         result = await session.execute(stmt)
@@ -100,7 +100,7 @@ async def update_exercise(
         exercise.scheduled_at = scheduled_at
     if status is not None:
         exercise.status = status
-        
+
     if problem_ids is not None:
         stmt = select(MathWordProblem).where(MathWordProblem.id.in_(problem_ids))
         result = await session.execute(stmt)
@@ -125,7 +125,7 @@ async def get_homework_problems_for_class(
     exercises = await get_exercises_for_class(
         session, class_id, exercise_type=ExerciseType.HOMEWORK
     )
-    
+
     # Collect unique problems from all homework exercises
     seen_ids: set[str] = set()
     problems: list[MathWordProblem] = []
@@ -136,5 +136,5 @@ async def get_homework_problems_for_class(
             if problem.id not in seen_ids:
                 seen_ids.add(problem.id)
                 problems.append(problem)
-    
+
     return problems

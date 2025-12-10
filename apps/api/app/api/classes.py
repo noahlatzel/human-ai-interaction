@@ -17,7 +17,12 @@ from .schemas.classes import (
     ClassPayload,
     ClassStudentsResponse,
 )
-from .schemas.users import UserCreateRequest, UserCreateResponse, UserPayload, UserUpdateRequest
+from .schemas.users import (
+    UserCreateRequest,
+    UserCreateResponse,
+    UserPayload,
+    UserUpdateRequest,
+)
 
 router = APIRouter(prefix="/classes", tags=["classes"])
 

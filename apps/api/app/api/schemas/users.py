@@ -77,7 +77,7 @@ class UserCreateResponse(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     """Payload for updating user profile."""
-    
+
     model_config = ConfigDict(populate_by_name=True)
 
     email: Optional[str] = None
