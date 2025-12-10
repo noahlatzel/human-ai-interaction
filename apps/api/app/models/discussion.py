@@ -43,6 +43,9 @@ class Discussion(Base):
         cascade="all, delete-orphan",
     )
 
+    reply_count: Optional[int] = None
+    is_subscribed: Optional[bool] = None
+
 
 class DiscussionReply(Base):
     """Reply to a discussion thread."""

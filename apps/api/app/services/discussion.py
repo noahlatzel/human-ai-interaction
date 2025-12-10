@@ -47,7 +47,7 @@ async def get_discussions(
 
     query = query.order_by(desc(Discussion.updated_at)).offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_discussion_by_id(
@@ -75,7 +75,7 @@ async def get_reply_count(db: AsyncSession, discussion_id: int) -> int:
         .filter(DiscussionReply.discussion_id == discussion_id)
     )
     result = await db.execute(query)
-    return result.scalar()
+    return result.scalar() or 0
 
 
 # Reply CRUD
@@ -90,9 +90,11 @@ async def create_reply(
     await db.flush()
 
     # Update discussion's updated_at timestamp
-    discussion = await get_discussion_by_id(db, discussion_id)
-    if discussion:
-        discussion.updated_at = func.now()
+    await db.execute(
+        update(Discussion)
+        .where(Discussion.id == discussion_id)
+        .values(updated_at=func.now())
+    )
 
     # Notify all subscribers (except the author of the reply)
     await create_reply_notifications(
@@ -205,11 +207,11 @@ async def get_user_notifications(
     query = select(Notification).filter(Notification.user_id == user_id)
 
     if unread_only:
-        query = query.filter(not Notification.is_read)
+        query = query.filter(~Notification.is_read)
 
     query = query.order_by(desc(Notification.created_at))
     result = await db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_unread_count(db: AsyncSession, user_id: str) -> int:
@@ -217,10 +219,10 @@ async def get_unread_count(db: AsyncSession, user_id: str) -> int:
     query = (
         select(func.count())
         .select_from(Notification)
-        .filter(Notification.user_id == user_id, not Notification.is_read)
+        .filter(Notification.user_id == user_id, ~Notification.is_read)
     )
     result = await db.execute(query)
-    return result.scalar()
+    return result.scalar() or 0
 
 
 async def mark_notification_read(
@@ -245,7 +247,7 @@ async def mark_all_notifications_read(db: AsyncSession, user_id: str):
     """Mark all notifications as read for a user"""
     stmt = (
         update(Notification)
-        .where(Notification.user_id == user_id, not Notification.is_read)
+        .where(Notification.user_id == user_id, ~Notification.is_read)
         .values(is_read=True)
     )
     await db.execute(stmt)
