@@ -62,7 +62,9 @@ async function request<TResponse>(path: string, options: RequestOptions = {}): P
     if (isJson && data && typeof data === 'object' && 'detail' in data) {
       const detail = (data as { detail?: unknown }).detail;
       if (Array.isArray(detail)) {
-        message = detail.map((e: unknown) => (e as any)?.msg || JSON.stringify(e)).join(', ');
+        message = detail
+          .map((e: unknown) => (e as { msg?: string })?.msg ?? JSON.stringify(e))
+          .join(', ');
       } else {
         message = String(detail);
       }
