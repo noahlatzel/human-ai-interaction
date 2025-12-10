@@ -39,7 +39,7 @@ export const updateStudentInClass = (
   studentId: string,
   payload: UpdateStudentRequest,
 ) =>
-  apiClient.patch<any, UpdateStudentRequest>(
+  apiClient.patch<CreateStudentResponse, UpdateStudentRequest>(
     `/classes/${classId}/students/${studentId}`,
     payload,
   );
