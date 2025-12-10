@@ -52,9 +52,23 @@ export function DiscussionList({ onSelectDiscussion, onCreateDiscussion }: Discu
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<string | undefined>(undefined);
 
+  const loadDiscussions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await discussionApi.getDiscussions(category);
+      setDiscussions(data);
+    } catch (error) {
+      console.error('Failed to load discussions:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load discussions');
+    } finally {
+      setLoading(false);
+    }
+  }, [category]);
+
   useEffect(() => {
     loadDiscussions();
-  }, [category]);
+  }, [loadDiscussions]);
 
   const loadDiscussions = async () => {
     try {

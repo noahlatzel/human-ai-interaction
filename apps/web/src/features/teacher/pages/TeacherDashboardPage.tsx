@@ -29,7 +29,6 @@ export default function TeacherDashboardPage() {
     classError,
     studentError,
     problemError,
-    exerciseError,
     selectClass,
     refreshClasses,
     refreshStudents,

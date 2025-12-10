@@ -63,7 +63,7 @@ export default function ProfileMock({ firstName, lastName, email, role, classGra
 
     try {
       setLoading(true);
-      const payload: any = {
+      const payload: Record<string, string> = {
         firstName: profile.firstName,
         lastName: profile.lastName,
         email: profile.email,
