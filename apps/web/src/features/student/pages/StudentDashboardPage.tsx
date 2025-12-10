@@ -288,7 +288,11 @@ export default function StudentDashboardPage() {
                   <p className="text-sm text-slate-600 mb-4 px-2">{exercise.description}</p>
                 )}
                 <ProblemList
-                  problems={exercise.problems || []}
+                  problems={(exercise.problems || []).map((p) => ({
+                    ...p,
+                    difficultyLabel: p.difficulty ?? '',
+                    difficultyValue: p.difficulty === 'einfach' ? 1 : p.difficulty === 'mittel' ? 2 : p.difficulty === 'schwierig' ? 3 : 0,
+                  }))}
                   loading={false}
                   error={null}
                   onRetry={() => {}}

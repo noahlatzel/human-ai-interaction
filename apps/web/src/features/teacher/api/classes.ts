@@ -6,7 +6,7 @@ import type {
   TeacherClass,
   UpdateStudentRequest,
 } from '../../../types/teacher';
-import type { AuthUser } from '../../../types/auth';
+// Removed unused AuthUser type, backend returns UserPayload
 
 type CreateClassPayload = {
   grade: number;
@@ -39,7 +39,7 @@ export const updateStudentInClass = (
   studentId: string,
   payload: UpdateStudentRequest,
 ) =>
-  apiClient.patch<AuthUser, UpdateStudentRequest>(
+  apiClient.patch<any, UpdateStudentRequest>(
     `/classes/${classId}/students/${studentId}`,
     payload,
   );
