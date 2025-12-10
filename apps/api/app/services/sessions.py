@@ -39,9 +39,9 @@ def _rolling_expiry(settings: Settings, absolute_expires_at: datetime) -> dateti
     """Compute next rolling expiry capped by the absolute expiry."""
     next_expiry = _now() + timedelta(hours=settings.session_ttl_hours)
     if next_expiry.tzinfo is None:
-        next_expiry = next_expiry.replace(tzinfo=UTC)
+        next_expiry = next_expiry.replace(tzinfo=timezone.utc)
     if absolute_expires_at.tzinfo is None:
-        absolute_expires_at = absolute_expires_at.replace(tzinfo=UTC)
+        absolute_expires_at = absolute_expires_at.replace(tzinfo=timezone.utc)
     return min(next_expiry, absolute_expires_at)
 
 

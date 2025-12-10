@@ -205,7 +205,7 @@ async def get_user_notifications(
     query = select(Notification).filter(Notification.user_id == user_id)
 
     if unread_only:
-        query = query.filter(Notification.is_read == False)
+        query = query.filter(not Notification.is_read)
 
     query = query.order_by(desc(Notification.created_at))
     result = await db.execute(query)
@@ -217,7 +217,7 @@ async def get_unread_count(db: AsyncSession, user_id: str) -> int:
     query = (
         select(func.count())
         .select_from(Notification)
-        .filter(Notification.user_id == user_id, Notification.is_read == False)
+        .filter(Notification.user_id == user_id, not Notification.is_read)
     )
     result = await db.execute(query)
     return result.scalar()
@@ -245,7 +245,7 @@ async def mark_all_notifications_read(db: AsyncSession, user_id: str):
     """Mark all notifications as read for a user"""
     stmt = (
         update(Notification)
-        .where(Notification.user_id == user_id, Notification.is_read == False)
+        .where(Notification.user_id == user_id, not Notification.is_read)
         .values(is_read=True)
     )
     await db.execute(stmt)
