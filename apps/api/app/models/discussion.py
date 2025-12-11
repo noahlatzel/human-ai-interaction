@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -43,8 +43,9 @@ class Discussion(Base):
         cascade="all, delete-orphan",
     )
 
-    reply_count: Optional[int] = None
-    is_subscribed: Optional[bool] = None
+    # Transient attributes (not stored in DB)
+    reply_count: ClassVar[Optional[int]] = None
+    is_subscribed: ClassVar[Optional[bool]] = None
 
 
 class DiscussionReply(Base):

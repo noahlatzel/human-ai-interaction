@@ -11,6 +11,13 @@ import CreateClassExerciseForm from '../components/CreateClassExerciseForm';
 import ProblemList from '../components/ProblemList';
 import ProblemForm from '../components/ProblemForm';
 import { useTeacherDashboard } from '../hooks/useTeacherDashboard';
+import { DiscussionList } from '../../discussions/components/DiscussionList';
+import { DiscussionDetail } from '../../discussions/components/DiscussionDetail';
+import { useLearningTips } from '../../learning-tips/hooks/useLearningTips';
+import TipsList from '../../learning-tips/components/TipsList';
+import TipDetail from '../../learning-tips/components/TipDetail';
+import TipForm from '../../learning-tips/components/TipForm';
+import type { LearningTip, LearningTipCreate } from '../../../types/learningTip';
 
 export default function TeacherDashboardPage() {
   const { state: authState, logout } = useAuth();
@@ -45,7 +52,7 @@ export default function TeacherDashboardPage() {
     deleteExercise,
   } = useTeacherDashboard();
 
-  const [activeTab, setActiveTab] = useState<'classes' | 'problems'>('classes');
+  const [activeTab, setActiveTab] = useState<'classes' | 'problems' | 'community' | 'tips'>('classes');
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [showProblemForm, setShowProblemForm] = useState(false);
   const [showClassForm, setShowClassForm] = useState(false);
@@ -53,6 +60,14 @@ export default function TeacherDashboardPage() {
   const [submittingStudent, setSubmittingStudent] = useState(false);
   const [submittingProblem, setSubmittingProblem] = useState(false);
   const [creatingClass, setCreatingClass] = useState(false);
+  const [selectedDiscussionId, setSelectedDiscussionId] = useState<number | null>(null);
+  const [discussionRefreshKey, setDiscussionRefreshKey] = useState(0);
+  const [selectedTip, setSelectedTip] = useState<LearningTip | null>(null);
+  const [showTipForm, setShowTipForm] = useState(false);
+  const [editingTip, setEditingTip] = useState<LearningTip | null>(null);
+  const [submittingTip, setSubmittingTip] = useState(false);
+
+  const { tips, loading: tipsLoading, error: tipsError, createTip, updateTip, deleteTip, reload: reloadTips } = useLearningTips();
 
   const selectedClass = useMemo(
     () => classes.find((cls) => cls.id === selectedClassId) ?? null,
@@ -65,6 +80,16 @@ export default function TeacherDashboardPage() {
   };
 
   const handleRefresh = async () => {
+    if (activeTab === 'community') {
+      setDiscussionRefreshKey(prev => prev + 1);
+      toast.success('Aktualisiert');
+      return;
+    }
+    if (activeTab === 'tips') {
+      await reloadTips();
+      toast.success('Aktualisiert');
+      return;
+    }
     await Promise.all([refreshClasses(), refreshProblems()]);
     if (selectedClassId) {
       await Promise.all([refreshStudents(selectedClassId), refreshExercises(selectedClassId)]);
@@ -182,24 +207,42 @@ export default function TeacherDashboardPage() {
         <button
           type="button"
           onClick={() => setActiveTab('classes')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold ${
-            activeTab === 'classes'
-              ? 'bg-blue-600 text-white shadow'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold ${activeTab === 'classes'
+            ? 'bg-blue-600 text-white shadow'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
         >
           Klassen
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('problems')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold ${
-            activeTab === 'problems'
-              ? 'bg-emerald-600 text-white shadow'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold ${activeTab === 'problems'
+            ? 'bg-emerald-600 text-white shadow'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
         >
           Aufgaben
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('community')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold ${activeTab === 'community'
+            ? 'bg-purple-600 text-white shadow'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+        >
+          Community
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('tips')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold ${activeTab === 'tips'
+            ? 'bg-amber-600 text-white shadow'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+        >
+          Tipps & Tricks
         </button>
       </div>
 
@@ -288,11 +331,10 @@ export default function TeacherDashboardPage() {
                   key={cls.id}
                   type="button"
                   onClick={() => selectClass(cls.id)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    selectedClassId === cls.id
-                      ? 'border-blue-400 bg-blue-50 shadow'
-                      : 'border-slate-200 bg-white hover:border-blue-200'
-                  }`}
+                  className={`rounded-2xl border p-4 text-left transition ${selectedClassId === cls.id
+                    ? 'border-blue-400 bg-blue-50 shadow'
+                    : 'border-slate-200 bg-white hover:border-blue-200'
+                    }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Klasse</div>
                   <div className="text-xl font-bold text-slate-900">{cls.label}</div>
@@ -380,7 +422,7 @@ export default function TeacherDashboardPage() {
             </div>
           ) : null}
         </div>
-      ) : (
+      ) : activeTab === 'problems' ? (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Textaufgaben</h2>
@@ -422,7 +464,121 @@ export default function TeacherDashboardPage() {
             />
           )}
         </section>
-      )}
+      ) : activeTab === 'community' ? (
+        <section className="space-y-4">
+          {selectedDiscussionId ? (
+            <DiscussionDetail
+              discussionId={selectedDiscussionId}
+              onBack={() => setSelectedDiscussionId(null)}
+            />
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Community-Diskussionen</h2>
+                  <p className="text-sm text-slate-600">Diskussionen deiner Schüler:innen</p>
+                </div>
+              </div>
+              <DiscussionList
+                key={discussionRefreshKey}
+                onSelectDiscussion={setSelectedDiscussionId}
+                onCreateDiscussion={() => {
+                  toast('Neue Diskussion erstellen - in Entwicklung');
+                }}
+              />
+            </>
+          )}
+        </section>
+      ) : activeTab === 'tips' ? (
+        <section className="space-y-4">
+          {selectedTip ? (
+            <TipDetail
+              tip={selectedTip}
+              onBack={() => {
+                setSelectedTip(null);
+                setEditingTip(null);
+              }}
+              onEdit={() => {
+                setEditingTip(selectedTip);
+                setShowTipForm(true);
+              }}
+              onDelete={async () => {
+                try {
+                  await deleteTip(selectedTip.id);
+                  setSelectedTip(null);
+                  toast.success('Tipp gelöscht');
+                } catch (err) {
+                  const message = err instanceof Error ? err.message : 'Löschen fehlgeschlagen';
+                  toast.error(message);
+                }
+              }}
+              showActions={true}
+            />
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-900">Tipps & Tricks</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingTip(null);
+                    setShowTipForm((v) => !v);
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {showTipForm ? 'Schließen' : 'Neu'}
+                </button>
+              </div>
+
+              {showTipForm ? (
+                <div className="border border-slate-100 rounded-2xl p-4 bg-white shadow-sm">
+                  <TipForm
+                    initialData={editingTip || undefined}
+                    isEdit={!!editingTip}
+                    onSubmit={async (data) => {
+                      setSubmittingTip(true);
+                      try {
+                        if (editingTip) {
+                          await updateTip(editingTip.id, data);
+                          toast.success('Tipp aktualisiert');
+                        } else {
+                          await createTip(data as LearningTipCreate);
+                          toast.success('Tipp erstellt');
+                        }
+                        setShowTipForm(false);
+                        setEditingTip(null);
+                      } catch (err) {
+                        const message = err instanceof Error ? err.message : 'Fehler beim Speichern';
+                        toast.error(message);
+                      } finally {
+                        setSubmittingTip(false);
+                      }
+                    }}
+                    onCancel={() => {
+                      setShowTipForm(false);
+                      setEditingTip(null);
+                    }}
+                    isSubmitting={submittingTip}
+                  />
+                </div>
+              ) : null}
+
+              {tipsLoading ? (
+                <div className="text-sm text-slate-600">Lade Tipps...</div>
+              ) : tipsError ? (
+                <div className="text-sm text-rose-600">Fehler: {tipsError}</div>
+              ) : (
+                <TipsList
+                  tips={tips}
+                  onTipClick={setSelectedTip}
+                  loading={false}
+                  error={null}
+                />
+              )}
+            </>
+          )}
+        </section>
+      ) : null}
     </TeacherLayout>
   );
 }

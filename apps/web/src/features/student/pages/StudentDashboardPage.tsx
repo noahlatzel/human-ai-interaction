@@ -38,7 +38,7 @@ export default function StudentDashboardPage() {
     };
 
     if (!problems) return groups;
-    
+
     problems.forEach((problem) => {
       const mainOp = problem.operations?.[0] || 'sonstiges';
       const topicMap: Record<string, string> = {
@@ -49,13 +49,13 @@ export default function StudentDashboardPage() {
         sonstiges: 'Sonstiges',
       };
       const topic = topicMap[mainOp] || 'Sonstiges';
-      
+
       if (!groups[topic]) {
         groups[topic] = [];
       }
       groups[topic].push(problem);
     });
-    
+
     return groups;
   }, [problems]);
 
@@ -74,6 +74,12 @@ export default function StudentDashboardPage() {
 
   const handleSelect = (problemId: string) => {
     navigate(getProblemRoute(problemId), { state: { problems } });
+  };
+
+  const handleClassExerciseSelect = (problemId: string) => {
+    // Sammle alle Probleme aus allen Klassenübungen
+    const allClassProblems = classExercises.flatMap(ex => ex.problems || []);
+    navigate(getProblemRoute(problemId), { state: { problems: allClassProblems } });
   };
 
   const renderHome = () => (
@@ -109,28 +115,28 @@ export default function StudentDashboardPage() {
           />
         ) : selectedTopic ? (
           <div className="space-y-4">
-                      <div className="mb-6">
-            <button
-              onClick={() => setSelectedTopic(null)}
-              className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all hover:-translate-y-0.5 mb-6"
-            >
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </div>
-              <span className="text-lg">Zurück zur Übersicht</span>
-            </button>
+            <div className="mb-6">
+              <button
+                onClick={() => setSelectedTopic(null)}
+                className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all hover:-translate-y-0.5 mb-6"
+              >
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </div>
+                <span className="text-lg">Zurück zur Übersicht</span>
+              </button>
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-800 mb-3 px-2 border-l-4 border-slate-800 ml-1">
@@ -140,7 +146,7 @@ export default function StudentDashboardPage() {
                 problems={problemsByOperation[selectedTopic] || []}
                 loading={false}
                 error={null}
-                onRetry={() => {}}
+                onRetry={() => { }}
                 onSelect={handleSelect}
               />
             </div>
@@ -295,8 +301,8 @@ export default function StudentDashboardPage() {
                   }))}
                   loading={false}
                   error={null}
-                  onRetry={() => {}}
-                  onSelect={handleSelect}
+                  onRetry={() => { }}
+                  onSelect={handleClassExerciseSelect}
                 />
               </div>
             );
@@ -310,23 +316,21 @@ export default function StudentDashboardPage() {
             const month = (scheduledDate.getMonth() + 1).toString().padStart(2, '0');
             const year = scheduledDate.getFullYear();
             const formattedDate = `${day}.${month}.${year}`;
-            
+
             return (
               <div
                 key={exercise.id}
-                className={`flex items-center justify-between p-4 rounded-2xl border ${
-                  exercise.status === 'open'
-                    ? 'bg-white border-slate-200 shadow-sm'
-                    : 'bg-slate-50 border-slate-100 opacity-75'
-                }`}
+                className={`flex items-center justify-between p-4 rounded-2xl border ${exercise.status === 'open'
+                  ? 'bg-white border-slate-200 shadow-sm'
+                  : 'bg-slate-50 border-slate-100 opacity-75'
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
-                      exercise.status === 'open'
-                        ? 'bg-indigo-100 text-indigo-700'
-                        : 'bg-slate-200 text-slate-500'
-                    }`}
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${exercise.status === 'open'
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : 'bg-slate-200 text-slate-500'
+                      }`}
                   >
                     {day}
                   </div>
@@ -342,9 +346,9 @@ export default function StudentDashboardPage() {
                     </h3>
                   </div>
                 </div>
-                
+
                 {exercise.status === 'open' ? (
-                  <button 
+                  <button
                     onClick={() => setSelectedExercise(exercise.id)}
                     className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
                   >

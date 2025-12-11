@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .classroom import Classroom
     from .session import UserSession
     from .learning import LearningSession
+    from .learning_tip import LearningTip
     from .discussion import (
         Discussion,
         DiscussionReply,
@@ -95,6 +96,11 @@ class User(Base):
     )
     notifications: Mapped[list["Notification"]] = relationship(
         back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    learning_tips: Mapped[list["LearningTip"]] = relationship(
+        back_populates="teacher",
         cascade="all, delete-orphan",
         lazy="selectin",
     )

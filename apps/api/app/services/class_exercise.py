@@ -20,7 +20,11 @@ async def get_exercises_for_class(
         select(ClassExercise)
         .where(ClassExercise.class_id == class_id)
         .order_by(ClassExercise.scheduled_at.desc())
-        .options(selectinload(ClassExercise.problems))
+        .options(
+            selectinload(ClassExercise.problems).selectinload(
+                MathWordProblem.operations
+            )
+        )
     )
     if exercise_type is not None:
         stmt = stmt.where(ClassExercise.exercise_type == exercise_type)
@@ -35,7 +39,11 @@ async def get_exercise_by_id(
     stmt = (
         select(ClassExercise)
         .where(ClassExercise.id == exercise_id)
-        .options(selectinload(ClassExercise.problems))
+        .options(
+            selectinload(ClassExercise.problems).selectinload(
+                MathWordProblem.operations
+            )
+        )
     )
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
