@@ -36,6 +36,7 @@ def create_problem(
     problem_description: str = "Sample problem",
     solution: str = "42",
     difficulty: str = "mittel",
+    grade: int = 3,
     operations: list[str] | None = None,
 ) -> dict[str, Any]:
     """Helper to create a math word problem."""
@@ -46,6 +47,7 @@ def create_problem(
             "problemDescription": problem_description,
             "solution": solution,
             "difficulty": difficulty,
+            "grade": grade,
             "operations": operations or ["addition"],
         },
     )
@@ -54,11 +56,16 @@ def create_problem(
 
 
 def test_create_requires_teacher_or_admin(client: TestClient) -> None:
-    """Students cannot create math word problems."""
+    """Only teachers can create math word problems; students and admins are forbidden."""
     student_email = unique_email("student")
     register_resp = client.post(
         "/v1/auth/register",
-        json={"email": student_email, "password": "studpw", "role": "student"},
+        json={
+            "email": student_email,
+            "password": "studpw",
+            "role": "student",
+            "grade": 3,
+        },
     )
     assert register_resp.status_code == 201
     student_tokens = login(client, student_email, "studpw")
@@ -70,16 +77,34 @@ def test_create_requires_teacher_or_admin(client: TestClient) -> None:
             "problemDescription": "Add two numbers.",
             "solution": "2",
             "difficulty": "einfach",
+            "grade": 3,
             "operations": ["addition"],
         },
     )
     assert create_resp.status_code == 403
 
+    admin_tokens = login(client, "admin@example.com", "adminpw")
+    client.cookies.clear()
+
+    admin_resp = client.post(
+        "/v1/math-problems",
+        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+        json={
+            "problemDescription": "Admin not allowed.",
+            "solution": "0",
+            "difficulty": "einfach",
+            "grade": 3,
+            "operations": ["addition"],
+        },
+    )
+    assert admin_resp.status_code == 403
+
 
 def test_teacher_create_filter_and_sort(client: TestClient) -> None:
     """Teachers can create problems; filtering and sorting behave as expected."""
-    admin_tokens = login(client, "admin@example.com", "adminpw")
-    teacher_email, _ = create_teacher(client, admin_tokens["accessToken"])
+    teacher_email, _ = create_teacher(
+        client, login(client, "admin@example.com", "adminpw")["accessToken"]
+    )
     teacher_tokens = login(client, teacher_email, "teachpw")
 
     first = create_problem(
@@ -122,12 +147,76 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
     assert difficulties == ["schwierig", "mittel", "einfach"]
 
 
-def test_admin_can_delete_problem(client: TestClient) -> None:
-    """Admins can delete problems and they disappear from listings."""
-    admin_tokens = login(client, "admin@example.com", "adminpw")
+def test_student_lists_only_matching_grade(client: TestClient) -> None:
+    """Students see only problems matching their class grade; teachers can filter by grade."""
+    teacher_email, _ = create_teacher(
+        client, login(client, "admin@example.com", "adminpw")["accessToken"]
+    )
+    teacher_tokens = login(client, teacher_email, "teachpw")
+
+    class_resp = client.post(
+        "/v1/classes",
+        headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
+        json={"grade": 3, "suffix": "a"},
+    )
+    assert class_resp.status_code == 201
+    created_class = class_resp.json()
+
+    grade_three_problem = create_problem(
+        client,
+        teacher_tokens["accessToken"],
+        problem_description="Grade 3 problem",
+        grade=3,
+    )
+    grade_four_problem = create_problem(
+        client,
+        teacher_tokens["accessToken"],
+        problem_description="Grade 4 problem",
+        grade=4,
+    )
+
+    student_resp = client.post(
+        "/v1/auth/register",
+        headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
+        json={
+            "email": unique_email("student-grade-filter"),
+            "password": "studpw",
+            "role": "student",
+            "classId": created_class["id"],
+        },
+    )
+    assert student_resp.status_code == 201
+    student_token = student_resp.json()["accessToken"]
+    client.cookies.clear()
+
+    list_resp = client.get(
+        "/v1/math-problems",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+    assert list_resp.status_code == 200
+    student_ids = {item["id"] for item in list_resp.json()["problems"]}
+    assert grade_three_problem["id"] in student_ids
+    assert grade_four_problem["id"] not in student_ids
+
+    teacher_filter = client.get(
+        "/v1/math-problems",
+        headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
+        params={"grade": 4},
+    )
+    assert teacher_filter.status_code == 200
+    filtered_ids = {item["id"] for item in teacher_filter.json()["problems"]}
+    assert filtered_ids == {grade_four_problem["id"]}
+
+
+def test_teacher_can_delete_problem_and_admin_is_forbidden(client: TestClient) -> None:
+    """Teachers can delete problems; admins are forbidden."""
+    teacher_email, _ = create_teacher(
+        client, login(client, "admin@example.com", "adminpw")["accessToken"]
+    )
+    teacher_tokens = login(client, teacher_email, "teachpw")
     created = create_problem(
         client,
-        admin_tokens["accessToken"],
+        teacher_tokens["accessToken"],
         problem_description="Delete me",
         solution="N/A",
         difficulty="mittel",
@@ -136,9 +225,16 @@ def test_admin_can_delete_problem(client: TestClient) -> None:
 
     delete_resp = client.delete(
         f"/v1/math-problems/{created['id']}",
-        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+        headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
     )
     assert delete_resp.status_code == 204
+
+    admin_tokens = login(client, "admin@example.com", "adminpw")
+    admin_delete = client.delete(
+        f"/v1/math-problems/{created['id']}",
+        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+    )
+    assert admin_delete.status_code == 404 or admin_delete.status_code == 403
 
     list_resp = client.get("/v1/math-problems")
     assert list_resp.status_code == 200
@@ -148,14 +244,18 @@ def test_admin_can_delete_problem(client: TestClient) -> None:
 
 def test_invalid_difficulty_rejected(client: TestClient) -> None:
     """Difficulty outside permitted range is rejected."""
-    admin_tokens = login(client, "admin@example.com", "adminpw")
+    teacher_email, _ = create_teacher(
+        client, login(client, "admin@example.com", "adminpw")["accessToken"]
+    )
+    teacher_tokens = login(client, teacher_email, "teachpw")
     response = client.post(
         "/v1/math-problems",
-        headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
+        headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
         json={
             "problemDescription": "Too hard?",
             "solution": "N/A",
             "difficulty": "unmoeglich",
+            "grade": 3,
             "operations": ["addition"],
         },
     )

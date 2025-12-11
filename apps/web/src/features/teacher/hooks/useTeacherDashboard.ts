@@ -1,35 +1,67 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../lib/apiClient';
-import { createStudent } from '../api/createStudent';
 import { createMathProblem } from '../api/createMathProblem';
+import { createStudent } from '../api/createStudent';
 import { deleteMathProblem } from '../api/deleteMathProblem';
 import { getMathProblems } from '../api/getMathProblems';
 import { getTeacherOverview } from '../api/getTeacherOverview';
+import {
+  addStudentToClass,
+  createClassroom,
+  deleteClassStudent,
+  getClassStudents,
+  listClasses,
+  updateStudentInClass,
+} from '../api/classes';
+import {
+  createClassExercise,
+  deleteClassExercise,
+  getClassExercises,
+} from '../api/classExercises';
 import type { MathWordProblem, MathWordProblemCreate } from '../../../types/problem';
-import type { DashboardStudent, ProgressSummaryResponse, StudentGroup } from '../../../types/student';
-import type { CreateStudentRequest } from '../../../types/teacher';
+import type { DashboardStudent, StudentGroup } from '../../../types/student';
+import type { CreateStudentRequest, TeacherClass } from '../../../types/teacher';
+import type { ClassExercise, CreateClassExerciseRequest } from '../../../types/classExercise';
+import type { Gender } from '../../../types/user';
 
 type DashboardState = {
+  classes: TeacherClass[];
   students: DashboardStudent[];
   totalProblems: number;
   problems: MathWordProblem[];
+  selectedClassId: string | null;
+  exercises: ClassExercise[];
 };
 
 type UseTeacherDashboardResult = {
+  classes: TeacherClass[];
+  selectedClassId: string | null;
   students: DashboardStudent[];
   totalProblems: number;
   problems: MathWordProblem[];
-  loading: boolean;
+  exercises: ClassExercise[];
+  loadingClasses: boolean;
+  loadingStudents: boolean;
   problemsLoading: boolean;
-  error: string | null;
+  exercisesLoading: boolean;
+  classError: string | null;
+  studentError: string | null;
   problemError: string | null;
-  refreshStudents: () => Promise<void>;
+  exerciseError: string | null;
+  selectClass: (classId: string | null) => Promise<void>;
+  refreshClasses: () => Promise<void>;
+  refreshStudents: (classId?: string | null) => Promise<void>;
   refreshProblems: () => Promise<void>;
+  refreshExercises: (classId?: string | null) => Promise<void>;
+  createClass: (grade: number, suffix?: string | null) => Promise<void>;
   createStudent: (payload: Omit<CreateStudentRequest, 'role'>) => Promise<void>;
-  deleteStudent: (studentId: string) => void;
+  deleteStudent: (studentId: string) => Promise<void>;
   toggleGroup: (studentId: string) => void;
+  updateStudentGender: (studentId: string, classId: string, gender: Gender) => Promise<void>;
   createProblem: (payload: MathWordProblemCreate) => Promise<void>;
   deleteProblem: (problemId: string) => Promise<void>;
+  createExercise: (payload: CreateClassExerciseRequest) => Promise<void>;
+  deleteExercise: (exerciseId: string) => Promise<void>;
 };
 
 const deriveError = (error: unknown) => {
@@ -39,11 +71,11 @@ const deriveError = (error: unknown) => {
 };
 
 const mergeGroups = (
-  next: ProgressSummaryResponse,
+  next: DashboardStudent[],
   previousStudents: DashboardStudent[],
 ): DashboardStudent[] => {
   const groupMap = new Map(previousStudents.map((s) => [s.studentId, s.group]));
-  return next.students.map((student) => ({
+  return next.map((student) => ({
     ...student,
     group: groupMap.get(student.studentId) ?? 'A',
   }));
@@ -51,31 +83,21 @@ const mergeGroups = (
 
 export function useTeacherDashboard(): UseTeacherDashboardResult {
   const [state, setState] = useState<DashboardState>({
+    classes: [],
     students: [],
     totalProblems: 0,
     problems: [],
+    selectedClassId: null,
+    exercises: [],
   });
-  const [loading, setLoading] = useState(true);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [problemsLoading, setProblemsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [exercisesLoading, setExercisesLoading] = useState(false);
+  const [classError, setClassError] = useState<string | null>(null);
+  const [studentError, setStudentError] = useState<string | null>(null);
   const [problemError, setProblemError] = useState<string | null>(null);
-
-  const refreshStudents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await getTeacherOverview();
-      setState((prev) => ({
-        ...prev,
-        totalProblems: result.totalProblems,
-        students: mergeGroups(result, prev.students),
-      }));
-    } catch (err) {
-      setError(deriveError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [exerciseError, setExerciseError] = useState<string | null>(null);
 
   const refreshProblems = useCallback(async () => {
     setProblemsLoading(true);
@@ -93,25 +115,152 @@ export function useTeacherDashboard(): UseTeacherDashboardResult {
     }
   }, []);
 
-  useEffect(() => {
-    refreshStudents();
-    refreshProblems();
-  }, [refreshProblems, refreshStudents]);
+  const refreshClasses = useCallback(async () => {
+    setLoadingClasses(true);
+    setClassError(null);
+    try {
+      const result = await listClasses();
+      setState((prev) => {
+        const nextSelected =
+          prev.selectedClassId && result.classes.some((cls) => cls.id === prev.selectedClassId)
+            ? prev.selectedClassId
+            : result.classes[0]?.id ?? null;
+        return {
+          ...prev,
+          classes: result.classes,
+          selectedClassId: nextSelected,
+        };
+      });
+    } catch (err) {
+      setClassError(deriveError(err));
+    } finally {
+      setLoadingClasses(false);
+    }
+  }, []);
+
+  const refreshStudents = useCallback(
+    async (classId?: string | null) => {
+      const targetClassId = classId ?? state.selectedClassId;
+      if (!targetClassId) {
+        setState((prev) => ({ ...prev, students: [], totalProblems: 0 }));
+        return;
+      }
+      setLoadingStudents(true);
+      setStudentError(null);
+      try {
+        const currentClass = state.classes.find((cls) => cls.id === targetClassId);
+        const [roster, progress] = await Promise.all([
+          getClassStudents(targetClassId),
+          getTeacherOverview(),
+        ]);
+        const progressMap = new Map(progress.students.map((s) => [s.studentId, s]));
+
+        setState((prev) => {
+          const nextStudents: DashboardStudent[] = roster.students.map((student) => {
+            const stats = progressMap.get(student.id);
+            return {
+              studentId: student.id,
+              firstName: student.firstName ?? undefined,
+              lastName: student.lastName ?? undefined,
+              classId: student.classId ?? targetClassId,
+              classLabel: student.classLabel ?? currentClass?.label,
+              classGrade: student.classGrade ?? currentClass?.grade,
+              solved: stats?.solved ?? 0,
+              totalProblems: stats?.totalProblems ?? 0,
+              completionRate: stats?.completionRate ?? 0,
+              gender: student.gender ?? 'male',
+              group: 'A',
+            };
+          });
+
+          const merged = mergeGroups(nextStudents, prev.students);
+          const classProblemCount =
+            merged.length === 0
+              ? progress.totalProblems
+              : Math.max(progress.totalProblems, Math.max(...merged.map((s) => s.totalProblems)));
+
+          return {
+            ...prev,
+            students: merged,
+            totalProblems: classProblemCount,
+            selectedClassId: targetClassId,
+          };
+        });
+      } catch (err) {
+        setStudentError(deriveError(err));
+        setState((prev) => ({ ...prev, students: [] }));
+      } finally {
+        setLoadingStudents(false);
+      }
+    },
+    [state.classes, state.selectedClassId],
+  );
+
+  const refreshExercises = useCallback(async (classId?: string | null) => {
+    const targetClassId = classId ?? state.selectedClassId;
+    if (!targetClassId) {
+      setState((prev) => ({ ...prev, exercises: [] }));
+      return;
+    }
+    setExercisesLoading(true);
+    setExerciseError(null);
+    try {
+      const exercises = await getClassExercises(targetClassId);
+      setState((prev) => ({ ...prev, exercises }));
+    } catch (err) {
+      setExerciseError(deriveError(err));
+    } finally {
+      setExercisesLoading(false);
+    }
+  }, [state.selectedClassId]);
+
+  const selectClass = useCallback(
+    async (classId: string | null) => {
+      setState((prev) => ({ ...prev, selectedClassId: classId }));
+      await Promise.all([refreshStudents(classId), refreshExercises(classId)]);
+    },
+    [refreshStudents, refreshExercises],
+  );
+
+  const createClass = useCallback(
+    async (grade: number, suffix?: string | null) => {
+      const created = await createClassroom({ grade, suffix: suffix ?? '' });
+      setState((prev) => ({ ...prev, selectedClassId: created.id }));
+      await refreshClasses();
+      await refreshStudents(created.id);
+    },
+    [refreshClasses, refreshStudents],
+  );
 
   const handleCreateStudent = useCallback(
     async (payload: Omit<CreateStudentRequest, 'role'>) => {
-      await createStudent(payload);
-      await refreshStudents();
+      if (payload.classId) {
+        await addStudentToClass(payload.classId, payload);
+      } else {
+        await createStudent(payload);
+      }
+      await refreshStudents(payload.classId ?? state.selectedClassId);
     },
-    [refreshStudents],
+    [refreshStudents, state.selectedClassId],
   );
 
-  const handleDeleteStudent = useCallback((studentId: string) => {
-    setState((prev) => ({
-      ...prev,
-      students: prev.students.filter((s) => s.studentId !== studentId),
-    }));
-  }, []);
+  const handleDeleteStudent = useCallback(
+    async (studentId: string) => {
+      const targetClassId = state.selectedClassId;
+      if (!targetClassId) {
+        throw new Error('Keine Klasse ausgewählt');
+      }
+      await deleteClassStudent(targetClassId, studentId);
+      setState((prev) => {
+        const remaining = prev.students.filter((s) => s.studentId !== studentId);
+        const nextTotal = remaining.length
+          ? Math.max(...remaining.map((s) => s.totalProblems))
+          : 0;
+        return { ...prev, students: remaining, totalProblems: nextTotal };
+      });
+    },
+    [state.selectedClassId],
+  );
 
   const handleToggleGroup = useCallback((studentId: string) => {
     setState((prev) => ({
@@ -123,6 +272,19 @@ export function useTeacherDashboard(): UseTeacherDashboardResult {
       ),
     }));
   }, []);
+
+  const handleUpdateStudentGender = useCallback(
+    async (studentId: string, classId: string, gender: Gender) => {
+      await updateStudentInClass(classId, studentId, { gender });
+      setState((prev) => ({
+        ...prev,
+        students: prev.students.map((s) =>
+          s.studentId === studentId ? { ...s, gender } : s,
+        ),
+      }));
+    },
+    [],
+  );
 
   const handleCreateProblem = useCallback(
     async (payload: MathWordProblemCreate) => {
@@ -143,38 +305,103 @@ export function useTeacherDashboard(): UseTeacherDashboardResult {
     [],
   );
 
+  const handleCreateExercise = useCallback(
+    async (payload: CreateClassExerciseRequest) => {
+      const exercise = await createClassExercise(payload);
+      setState((prev) => ({
+        ...prev,
+        exercises: [exercise, ...prev.exercises],
+      }));
+    },
+    [],
+  );
+
+  const handleDeleteExercise = useCallback(
+    async (exerciseId: string) => {
+      await deleteClassExercise(exerciseId);
+      setState((prev) => ({
+        ...prev,
+        exercises: prev.exercises.filter((e) => e.id !== exerciseId),
+      }));
+    },
+    [],
+  );
+
+  useEffect(() => {
+    refreshClasses();
+    refreshProblems();
+  }, [refreshClasses, refreshProblems]);
+
+  useEffect(() => {
+    if (state.selectedClassId) {
+      refreshStudents(state.selectedClassId);
+      refreshExercises(state.selectedClassId);
+    } else {
+      setLoadingStudents(false);
+      setExercisesLoading(false);
+    }
+  }, [refreshStudents, refreshExercises, state.selectedClassId]);
+
   return useMemo(
     () => ({
+      classes: state.classes,
+      selectedClassId: state.selectedClassId,
       students: state.students,
       totalProblems: state.totalProblems,
       problems: state.problems,
-      loading,
+      exercises: state.exercises,
+      loadingClasses,
+      loadingStudents,
       problemsLoading,
-      error,
+      exercisesLoading,
+      classError,
+      studentError,
       problemError,
+      exerciseError,
+      selectClass,
+      refreshClasses,
       refreshStudents,
       refreshProblems,
+      refreshExercises,
+      createClass,
       createStudent: handleCreateStudent,
       deleteStudent: handleDeleteStudent,
       toggleGroup: handleToggleGroup,
+      updateStudentGender: handleUpdateStudentGender,
       createProblem: handleCreateProblem,
       deleteProblem: handleDeleteProblem,
+      createExercise: handleCreateExercise,
+      deleteExercise: handleDeleteExercise,
     }),
     [
-      error,
+      classError,
+      createClass,
       handleCreateProblem,
       handleCreateStudent,
       handleDeleteProblem,
       handleDeleteStudent,
       handleToggleGroup,
-      loading,
+      handleUpdateStudentGender,
+      handleCreateExercise,
+      handleDeleteExercise,
+      loadingClasses,
+      loadingStudents,
       problemError,
       problemsLoading,
+      exercisesLoading,
+      exerciseError,
+      refreshClasses,
       refreshProblems,
       refreshStudents,
+      refreshExercises,
+      selectClass,
+      state.classes,
       state.problems,
+      state.selectedClassId,
       state.students,
       state.totalProblems,
+      state.exercises,
+      studentError,
     ],
   );
 }

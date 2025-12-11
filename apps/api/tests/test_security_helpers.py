@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.api.deps import token_expiry_seconds
 from app.config import Settings
@@ -31,6 +31,6 @@ def test_email_normalization() -> None:
 
 def test_token_expiry_seconds_positive() -> None:
     """Token expiry helper returns positive seconds for future timestamps."""
-    future = datetime.now(UTC) + timedelta(minutes=5)
+    future = datetime.now(timezone.utc) + timedelta(minutes=5)
     seconds = token_expiry_seconds(future)
     assert 290 <= seconds <= 300

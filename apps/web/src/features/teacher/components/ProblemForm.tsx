@@ -26,6 +26,7 @@ export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: Proble
   const defaultValues: ProblemFormValues = {
     problemDescription: '',
     solution: '',
+    grade: 3,
     difficulty: 'einfach',
     operations: [],
     hints: [],
@@ -47,6 +48,7 @@ export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: Proble
       .slice(0, 3);
     const payload: MathWordProblemCreate = {
       ...values,
+      grade: Number(values.grade),
       operations: ops,
       hints: normalizedHints,
     };
@@ -81,19 +83,32 @@ export default function ProblemForm({ onSubmit, onCancel, isSubmitting }: Proble
         />
       </label>
 
-      <label className="space-y-1 block">
-        <span className="text-sm font-semibold text-slate-700">Schwierigkeit</span>
-        <select
-          className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
-          {...register('difficulty', { required: true })}
-        >
-          {DIFFICULTIES.map((difficulty) => (
-            <option key={difficulty.value} value={difficulty.value}>
-              {difficulty.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="space-y-1 block">
+          <span className="text-sm font-semibold text-slate-700">Schwierigkeit</span>
+          <select
+            className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
+            {...register('difficulty', { required: true })}
+          >
+            {DIFFICULTIES.map((difficulty) => (
+              <option key={difficulty.value} value={difficulty.value}>
+                {difficulty.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="space-y-1 block">
+          <span className="text-sm font-semibold text-slate-700">Klassenstufe</span>
+          <select
+            className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+            {...register('grade', { required: true })}
+          >
+            <option value={3}>3. Klasse</option>
+            <option value={4}>4. Klasse</option>
+          </select>
+        </label>
+      </div>
 
       <div className="space-y-2">
         <span className="text-sm font-semibold text-slate-700">Operationen</span>

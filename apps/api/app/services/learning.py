@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
@@ -14,7 +14,7 @@ from app.models import LearningSession, User
 
 def _now() -> datetime:
     """Return timezone-aware now."""
-    return datetime.now(UTC)
+    return datetime.now(timezone.utc)
 
 
 async def end_open_learning_sessions(

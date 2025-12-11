@@ -29,3 +29,4 @@ plans/
 
 # Temp
 src_old
+.npm-cache

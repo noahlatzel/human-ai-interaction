@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import forestBackground from '../../../assets/forestBackground.png';
 import studentAvatar from '../../../assets/studentAvatarPlaceholder.png';
+import studentFemaleAvatar from '../../../assets/female_AvatarPlaceholder.png';
+import type { Gender } from '../../../types/user';
 
 type StudentLayoutProps = {
   userName: string;
@@ -9,6 +11,7 @@ type StudentLayoutProps = {
   streak?: number;
   navActive: 'home' | 'discover' | 'calendar' | 'profile' | 'community';
   onNavChange: (tab: 'home' | 'discover' | 'calendar' | 'profile' | 'community') => void;
+  gender?: Gender;
 };
 
 const formatDate = (date: Date) =>
@@ -21,8 +24,10 @@ export default function StudentLayout({
   streak = 0,
   navActive,
   onNavChange,
+  gender = 'male',
 }: StudentLayoutProps) {
   const today = new Date();
+  const avatarSrc = gender === 'female' ? studentFemaleAvatar : studentAvatar;
 
   const NavIcon = ({ type }: { type: string }) => {
     const iconClass = "w-6 h-6";
@@ -95,15 +100,20 @@ export default function StudentLayout({
               <span aria-hidden>🔥</span>
               <span>{streak} {streak === 1 ? 'Tag' : 'Tage'}</span>
             </div>
-            <div className="h-12 w-12 rounded-full border-2 border-white shadow overflow-hidden bg-white">
-              <img src={studentAvatar} alt="Avatar" className="h-full w-full object-contain" />
+            <div className="h-12 w-12 rounded-full border-2 border-white shadow overflow-hidden bg-white flex items-center justify-center">
+              <img src={avatarSrc} alt="Avatar" className="h-full w-full object-contain" />
             </div>
             <button
               type="button"
               onClick={onLogout}
-              className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold shadow hover:bg-slate-950 transition"
+              className="p-3 rounded-full bg-slate-900 text-white shadow hover:bg-slate-800 transition-colors"
+              title="Abmelden"
             >
-              Abmelden
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
             </button>
           </div>
         </div>

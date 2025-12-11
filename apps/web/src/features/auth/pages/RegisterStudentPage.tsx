@@ -11,7 +11,7 @@ type RegisterFormValues = Omit<RegisterRequest, 'role'>;
 
 export default function RegisterStudentPage() {
   const { register, handleSubmit } = useForm<RegisterFormValues>({
-    defaultValues: { email: '', password: '', firstName: '', lastName: '', teacherId: '' },
+    defaultValues: { email: '', password: '', firstName: '', lastName: '', classId: '', grade: 3 },
   });
   const { registerStudent, isAuthenticated, state, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +26,8 @@ export default function RegisterStudentPage() {
     try {
       const sanitized: RegisterFormValues = {
         ...values,
-        teacherId: values.teacherId || null,
+        classId: values.classId || null,
+        grade: values.grade ? Number(values.grade) : null,
         firstName: values.firstName || null,
         lastName: values.lastName || null,
       };
@@ -113,16 +114,33 @@ export default function RegisterStudentPage() {
           />
         </label>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-slate-700 ml-1">Lehrer-ID (optional)</span>
-          <input
-            type="text"
-            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
-            placeholder="Verknüpfe dich mit deinem Lehrer"
-            disabled={isLoading}
-            {...register('teacherId')}
-          />
-        </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold text-slate-700 ml-1">Klassen-ID (optional)</span>
+            <input
+              type="text"
+              className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 transition-all focus:border-blue-400 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+              placeholder="Von deiner Lehrkraft"
+              disabled={isLoading}
+              {...register('classId')}
+            />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold text-slate-700 ml-1">Klassenstufe</span>
+            <select
+              className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 transition-all focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none"
+              disabled={isLoading}
+              {...register('grade')}
+            >
+              <option value={3}>3. Klasse</option>
+              <option value={4}>4. Klasse</option>
+            </select>
+            <p className="text-xs text-slate-500">
+              Falls keine Klassen-ID vorhanden ist, wird diese Stufe für dich hinterlegt.
+            </p>
+          </label>
+        </div>
 
         <button
           type="submit"

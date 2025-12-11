@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -49,8 +50,11 @@ class StudentProgressSummary(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     student_id: str = Field(alias="studentId")
-    first_name: str | None = Field(alias="firstName", default=None)
-    last_name: str | None = Field(alias="lastName", default=None)
+    class_id: Optional[str] = Field(alias="classId", default=None)
+    class_grade: Optional[int] = Field(alias="classGrade", default=None)
+    class_label: Optional[str] = Field(alias="classLabel", default=None)
+    first_name: Optional[str] = Field(alias="firstName", default=None)
+    last_name: Optional[str] = Field(alias="lastName", default=None)
     solved: int
     total_problems: int = Field(alias="totalProblems")
     completion_rate: float = Field(alias="completionRate")
@@ -61,6 +65,9 @@ class StudentProgressSummary(BaseModel):
         return cls.model_validate(
             {
                 "studentId": stats.student_id,
+                "classId": stats.class_id,
+                "classGrade": stats.class_grade,
+                "classLabel": stats.class_label,
                 "firstName": stats.first_name,
                 "lastName": stats.last_name,
                 "solved": stats.solved,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,26 +24,26 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     role: Literal["teacher", "student"]
-    first_name: str | None = Field(default=None, alias="firstName")
-    last_name: str | None = Field(default=None, alias="lastName")
-    teacher_id: str | None = Field(
+    first_name: Optional[str] = Field(default=None, alias="firstName")
+    last_name: Optional[str] = Field(default=None, alias="lastName")
+    class_id: Optional[str] = Field(default=None, alias="classId")
+    grade: Optional[int] = Field(
         default=None,
-        alias="teacherId",
-        description=(
-            "Teacher ID a student should be assigned to. "
-            "Teachers registering students ignore this value, and solo students can omit it."
-        ),
+        ge=3,
+        le=4,
+        description="Required for students when classId is not provided (3 or 4).",
     )
+    gender: Literal["male", "female"] = Field(default="male")
 
 
 class AuthSuccess(BaseModel):
     """Response returned when authentication succeeds."""
 
     accessToken: str
-    refreshToken: str | None = None
+    refreshToken: Optional[str] = None
     expiresIn: int
-    sessionId: str | None = None
-    learningSessionId: str | None = None
+    sessionId: Optional[str] = None
+    learningSessionId: Optional[str] = None
     user: UserPayload
 
 
@@ -65,13 +65,14 @@ class RefreshResponse(BaseModel):
 class LogoutRequest(BaseModel):
     """Payload describing the refresh token to invalidate."""
 
-    refreshToken: str | None = None
+    refreshToken: Optional[str] = None
 
 
 class GuestLoginRequest(BaseModel):
-    """Payload for guest entry (first name only)."""
+    """Payload for guest entry."""
 
     firstName: str = Field(min_length=1, max_length=64)
+    grade: int = Field(ge=3, le=4)
 
 
 __all__ = [

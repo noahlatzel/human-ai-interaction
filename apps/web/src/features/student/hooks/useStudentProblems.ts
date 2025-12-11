@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../lib/apiClient';
-import { getProblems } from '../api/getProblems';
+import { getHomeworkProblems } from '../api/getProblems';
 import { getDifficultyMeta, mapOperations } from '../../problems/utils';
 import type { MathWordProblem, MathWordProblemWithMeta } from '../../../types/problem';
 
@@ -36,7 +36,7 @@ export function useStudentProblems(): UseStudentProblemsResult {
     setLoading(true);
     setError(null);
     try {
-      const result = await getProblems();
+      const result = await getHomeworkProblems();
       setState(result.problems.map(normalizeProblem));
     } catch (err) {
       setError(deriveError(err));

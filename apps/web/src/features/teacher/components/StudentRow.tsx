@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import StudentGroupToggle from './StudentGroupToggle';
 import type { DashboardStudent } from '../../../types/student';
+import type { Gender } from '../../../types/user';
 
 type StudentRowProps = {
   student: DashboardStudent;
+  classId: string;
   onToggleGroup: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void> | void;
+  onUpdateGender: (studentId: string, classId: string, gender: Gender) => Promise<void> | void;
 };
 
 const ProgressBar = ({ percent }: { percent: number }) => (
@@ -18,11 +21,22 @@ const ProgressBar = ({ percent }: { percent: number }) => (
   </div>
 );
 
-export default function StudentRow({ student, onToggleGroup, onDelete }: StudentRowProps) {
+export default function StudentRow({ student, classId, onToggleGroup, onDelete, onUpdateGender }: StudentRowProps) {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [updatingGender, setUpdatingGender] = useState(false);
   const fullName =
     [student.firstName, student.lastName].filter(Boolean).join(' ') || `Schüler ${student.studentId}`;
   const percent = student.completionRate * 100;
+
+  const handleGenderChange = async (newGender: Gender) => {
+    if (updatingGender) return;
+    setUpdatingGender(true);
+    try {
+      await onUpdateGender(student.studentId, classId, newGender);
+    } finally {
+      setUpdatingGender(false);
+    }
+  };
 
   const confirmModal =
     showConfirm && typeof document !== 'undefined'
@@ -44,7 +58,7 @@ export default function StudentRow({ student, onToggleGroup, onDelete }: Student
                   type="button"
                   onClick={() => {
                     setShowConfirm(false);
-                    onDelete(student.studentId);
+                    void onDelete(student.studentId);
                   }}
                   className="px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700"
                 >
@@ -60,11 +74,14 @@ export default function StudentRow({ student, onToggleGroup, onDelete }: Student
   return (
     <>
       <div className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 py-3 last:border-0">
-        <div className="col-span-4">
+        <div className="col-span-3">
           <div className="font-semibold text-slate-900">{fullName}</div>
+          {student.classLabel ? (
+            <div className="text-xs text-slate-500">Klasse {student.classLabel}</div>
+          ) : null}
           <div className="text-xs text-slate-500">ID: {student.studentId}</div>
         </div>
-        <div className="col-span-3">
+        <div className="col-span-2">
           <div className="text-sm font-semibold text-slate-800">
             {student.solved}/{student.totalProblems}
           </div>
@@ -75,6 +92,18 @@ export default function StudentRow({ student, onToggleGroup, onDelete }: Student
             {Math.round(percent)}%
           </div>
           <div className="text-xs text-slate-500 text-center">Erfolgsrate</div>
+        </div>
+        <div className="col-span-2 flex justify-center">
+          <select
+            value={student.gender ?? 'male'}
+            onChange={(e) => void handleGenderChange(e.target.value as Gender)}
+            disabled={updatingGender}
+            className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white disabled:opacity-50"
+            aria-label="Geschlecht ändern"
+          >
+            <option value="male">♂ Männlich</option>
+            <option value="female">♀ Weiblich</option>
+          </select>
         </div>
         <div className="col-span-2 flex justify-center">
           <StudentGroupToggle value={student.group} onToggle={() => onToggleGroup(student.studentId)} />

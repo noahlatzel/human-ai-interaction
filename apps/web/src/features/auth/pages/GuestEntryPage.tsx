@@ -11,7 +11,7 @@ type GuestFormValues = GuestLoginRequest;
 
 export default function GuestEntryPage() {
   const { register, handleSubmit } = useForm<GuestFormValues>({
-    defaultValues: { firstName: '' },
+    defaultValues: { firstName: '', grade: 3 },
   });
   const { guestLogin, isAuthenticated, state, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -73,6 +73,18 @@ export default function GuestEntryPage() {
             disabled={isLoading}
             {...register('firstName', { required: true })}
           />
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700 ml-1">Klassenstufe</span>
+          <select
+            className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 transition-all focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none"
+            disabled={isLoading}
+            {...register('grade', { required: true })}
+          >
+            <option value={3}>3. Klasse</option>
+            <option value={4}>4. Klasse</option>
+          </select>
         </label>
 
         <button

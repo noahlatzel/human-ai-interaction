@@ -58,9 +58,17 @@ async function request<TResponse>(path: string, options: RequestOptions = {}): P
   const data = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
-    const message = isJson && data && typeof data === 'object' && 'detail' in data
-      ? String((data as { detail?: unknown }).detail)
-      : response.statusText || 'Request failed';
+    let message = response.statusText || 'Request failed';
+    if (isJson && data && typeof data === 'object' && 'detail' in data) {
+      const detail = (data as { detail?: unknown }).detail;
+      if (Array.isArray(detail)) {
+        message = detail
+          .map((e: unknown) => (e as { msg?: string })?.msg ?? JSON.stringify(e))
+          .join(', ');
+      } else {
+        message = String(detail);
+      }
+    }
     throw new ApiError(message, response.status, data);
   }
 
@@ -72,6 +80,8 @@ export const apiClient = {
     request<TResponse>(path, { ...options, method: 'GET' }),
   post: <TResponse, TBody = unknown>(path: string, body: TBody, options: Omit<RequestOptions, 'method' | 'body'> = {}) =>
     request<TResponse>(path, { ...options, method: 'POST', body }),
+  patch: <TResponse, TBody = unknown>(path: string, body: TBody, options: Omit<RequestOptions, 'method' | 'body'> = {}) =>
+    request<TResponse>(path, { ...options, method: 'PATCH', body }),
   delete: <TResponse = unknown>(path: string, options: Omit<RequestOptions, 'method' | 'body'> = {}) =>
     request<TResponse>(path, { ...options, method: 'DELETE' }),
 };

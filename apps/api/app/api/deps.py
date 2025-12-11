@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +19,8 @@ def token_expiry_seconds(expires_at: datetime) -> int:
     """Return the number of seconds until expiry."""
     expires = expires_at
     if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=UTC)
-    remaining = expires - datetime.now(UTC)
+        expires = expires.replace(tzinfo=timezone.utc)
+    remaining = expires - datetime.now(timezone.utc)
     return max(0, int(remaining.total_seconds()))
 
 
