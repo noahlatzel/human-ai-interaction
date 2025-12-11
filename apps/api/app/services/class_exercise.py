@@ -21,7 +21,9 @@ async def get_exercises_for_class(
         .where(ClassExercise.class_id == class_id)
         .order_by(ClassExercise.scheduled_at.desc())
         .options(
-            selectinload(ClassExercise.problems).selectinload(MathWordProblem.operations)
+            selectinload(ClassExercise.problems).selectinload(
+                MathWordProblem.operations
+            )
         )
     )
     if exercise_type is not None:
@@ -38,7 +40,9 @@ async def get_exercise_by_id(
         select(ClassExercise)
         .where(ClassExercise.id == exercise_id)
         .options(
-            selectinload(ClassExercise.problems).selectinload(MathWordProblem.operations)
+            selectinload(ClassExercise.problems).selectinload(
+                MathWordProblem.operations
+            )
         )
     )
     result = await session.execute(stmt)

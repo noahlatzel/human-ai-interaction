@@ -43,7 +43,11 @@ async def list_discussions(
         # Teachers see only discussions from their students
         if auth_context.user.role == "teacher":
             discussions = await crud.get_discussions_for_teacher(
-                db, teacher_id=auth_context.user.id, category=category, skip=skip, limit=limit
+                db,
+                teacher_id=auth_context.user.id,
+                category=category,
+                skip=skip,
+                limit=limit,
             )
         else:
             discussions = await crud.get_discussions(
@@ -153,13 +157,20 @@ async def delete_discussion(
         raise HTTPException(status_code=404, detail="Discussion not found")
 
     # Teachers can delete any discussion, users only their own
-    if auth_context.user.role != "teacher" and discussion.author_id != auth_context.user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this discussion")
+    if (
+        auth_context.user.role != "teacher"
+        and discussion.author_id != auth_context.user.id
+    ):
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this discussion"
+        )
 
     await crud.delete_discussion(db, discussion_id)
 
 
-@router.delete("/{discussion_id}/replies/{reply_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{discussion_id}/replies/{reply_id}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_reply(
     discussion_id: int,
     reply_id: int,
@@ -173,6 +184,8 @@ async def delete_reply(
 
     # Teachers can delete any reply, users only their own
     if auth_context.user.role != "teacher" and reply.author_id != auth_context.user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this reply")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this reply"
+        )
 
     await crud.delete_reply(db, reply_id)

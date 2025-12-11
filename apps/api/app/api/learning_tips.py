@@ -43,7 +43,7 @@ async def create_learning_tip(
     session.add(tip)
     await session.commit()
     await session.refresh(tip)
-    
+
     return LearningTipResponse(
         id=tip.id,
         teacher_id=tip.teacher_id,
@@ -72,10 +72,10 @@ async def list_learning_tips(
     else:
         # Teachers see their own tips
         query = select(LearningTip).where(LearningTip.teacher_id == actor.user.id)
-    
+
     result = await session.execute(query)
     tips = result.scalars().all()
-    
+
     return [
         LearningTipResponse(
             id=tip.id,
@@ -105,30 +105,30 @@ async def update_learning_tip(
     query = select(LearningTip).where(LearningTip.id == tip_id)
     result = await session.execute(query)
     tip = result.scalar_one_or_none()
-    
+
     if not tip:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Learning tip not found",
         )
-    
+
     # Only the creator can update
     if tip.teacher_id != actor.user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only update your own tips",
         )
-    
+
     if payload.category is not None:
         tip.category = payload.category
     if payload.title is not None:
         tip.title = payload.title
     if payload.content is not None:
         tip.content = payload.content
-    
+
     await session.commit()
     await session.refresh(tip)
-    
+
     return LearningTipResponse(
         id=tip.id,
         teacher_id=tip.teacher_id,
@@ -154,20 +154,20 @@ async def delete_learning_tip(
     query = select(LearningTip).where(LearningTip.id == tip_id)
     result = await session.execute(query)
     tip = result.scalar_one_or_none()
-    
+
     if not tip:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Learning tip not found",
         )
-    
+
     # Only the creator can delete
     if tip.teacher_id != actor.user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own tips",
         )
-    
+
     await session.delete(tip)
     await session.commit()
 

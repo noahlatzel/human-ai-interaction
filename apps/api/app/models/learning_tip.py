@@ -35,7 +35,9 @@ class LearningTip(Base):
         DateTime, default=utcnow, onupdate=utcnow, nullable=False
     )
 
-    teacher: Mapped["User"] = relationship(back_populates="learning_tips", lazy="joined")
+    teacher: Mapped["User"] = relationship(
+        back_populates="learning_tips", lazy="joined"
+    )
 
 
 __all__ = ["LearningTip"]
