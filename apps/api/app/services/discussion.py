@@ -50,6 +50,38 @@ async def get_discussions(
     return list(result.scalars().all())
 
 
+async def get_discussions_for_teacher(
+    db: AsyncSession, teacher_id: str, category: Optional[str] = None, skip: int = 0, limit: int = 20
+) -> List[Discussion]:
+    """Get discussions from students in teacher's classes"""
+    from app.models import Classroom
+    
+    # Get all class IDs where teacher is the teacher
+    class_query = select(Classroom.id).filter(Classroom.teacher_id == teacher_id)
+    class_result = await db.execute(class_query)
+    class_ids = [row[0] for row in class_result.all()]
+    
+    # Get students in those classes
+    student_query = select(User.id).filter(
+        User.class_id.in_(class_ids),
+        User.role == "student"
+    )
+    student_result = await db.execute(student_query)
+    student_ids = [row[0] for row in student_result.all()]
+    
+    # Get discussions from those students
+    query = select(Discussion).options(selectinload(Discussion.author)).filter(
+        Discussion.author_id.in_(student_ids)
+    )
+    
+    if category:
+        query = query.filter(Discussion.category == category)
+    
+    query = query.order_by(desc(Discussion.updated_at)).offset(skip).limit(limit)
+    result = await db.execute(query)
+    return list(result.scalars().all())
+
+
 async def get_discussion_by_id(
     db: AsyncSession, discussion_id: int
 ) -> Optional[Discussion]:
@@ -252,3 +284,32 @@ async def mark_all_notifications_read(db: AsyncSession, user_id: str):
     )
     await db.execute(stmt)
     await db.commit()
+
+
+async def delete_discussion(db: AsyncSession, discussion_id: int):
+    """Delete a discussion and all related data"""
+    query = select(Discussion).filter(Discussion.id == discussion_id)
+    result = await db.execute(query)
+    discussion = result.scalars().first()
+    
+    if discussion:
+        await db.delete(discussion)
+        await db.commit()
+
+
+async def get_reply_by_id(db: AsyncSession, reply_id: int) -> Optional[DiscussionReply]:
+    """Get a single reply by ID"""
+    query = select(DiscussionReply).filter(DiscussionReply.id == reply_id)
+    result = await db.execute(query)
+    return result.scalars().first()
+
+
+async def delete_reply(db: AsyncSession, reply_id: int):
+    """Delete a reply"""
+    query = select(DiscussionReply).filter(DiscussionReply.id == reply_id)
+    result = await db.execute(query)
+    reply = result.scalars().first()
+    
+    if reply:
+        await db.delete(reply)
+        await db.commit()

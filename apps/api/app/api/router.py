@@ -9,6 +9,7 @@ from . import (
     classes,
     discussions,
     guest,
+    learning_tips,
     math_word_problems,
     notifications,
     progress,
@@ -24,6 +25,7 @@ api_router.include_router(users.router, tags=["users"])
 api_router.include_router(math_word_problems.router)
 api_router.include_router(progress.router)
 api_router.include_router(class_exercises.router)
+api_router.include_router(learning_tips.router)
 api_router.include_router(
     discussions.router, prefix="/discussions", tags=["discussions"]
 )

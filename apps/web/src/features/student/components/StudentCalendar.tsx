@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Flame } from 'lucide-react';
 import type { StreakResponse } from '../../../types/progress';
+import type { ClassExercise } from '../../../types/classExercise';
+import { getStudentClassExercises } from '../api/classExercises';
+import AppointmentsSidebar from './AppointmentsSidebar';
 
 type StudentCalendarProps = {
     streakData: StreakResponse | null;
@@ -12,6 +15,8 @@ type CalendarDay = {
     isCurrentMonth: boolean;
     isToday: boolean;
     hasActivity: boolean;
+    hasHomework: boolean;
+    hasClasswork: boolean;
 };
 
 const WEEKDAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -37,7 +42,13 @@ const formatDateString = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-const getMonthGrid = (year: number, month: number, activitySet: Set<string>): CalendarDay[] => {
+const getMonthGrid = (
+    year: number,
+    month: number,
+    activitySet: Set<string>,
+    homeworkDates: Set<string>,
+    classworkDates: Set<string>
+): CalendarDay[] => {
     const lastDay = new Date(year, month + 1, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -55,6 +66,8 @@ const getMonthGrid = (year: number, month: number, activitySet: Set<string>): Ca
             isCurrentMonth: true,
             isToday: dateString === todayString,
             hasActivity: activitySet.has(dateString),
+            hasHomework: homeworkDates.has(dateString),
+            hasClasswork: classworkDates.has(dateString),
         });
     }
 
@@ -65,14 +78,51 @@ export default function StudentCalendar({ streakData }: StudentCalendarProps) {
     const today = new Date();
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+    const [exercises, setExercises] = useState<ClassExercise[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Fetch class exercises for the authenticated student
+    useEffect(() => {
+        const fetchExercises = async () => {
+            setLoading(true);
+            try {
+                const data = await getStudentClassExercises();
+                setExercises(data);
+            } catch (error) {
+                console.error('Failed to fetch class exercises:', error);
+                // Silently fail - student might not have a class assigned
+                setExercises([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExercises();
+    }, []);
+
+    // Create sets for homework and classwork dates
+    const homeworkDates = new Set<string>();
+    const classworkDates = new Set<string>();
+
+    exercises.forEach((exercise) => {
+        if (exercise.scheduledAt) {
+            const dateString = formatDateString(new Date(exercise.scheduledAt));
+            if (exercise.exerciseType === 'homework') {
+                homeworkDates.add(dateString);
+            } else if (exercise.exerciseType === 'classroom') {
+                classworkDates.add(dateString);
+            }
+        }
+    });
 
     const activitySet = new Set(streakData?.activityHistory ?? []);
-    const monthGrid = getMonthGrid(currentYear, currentMonth, activitySet);
+    const monthGrid = getMonthGrid(currentYear, currentMonth, activitySet, homeworkDates, classworkDates);
 
     // Debug: Log streak data to console
     console.log('StudentCalendar - streakData:', streakData);
     console.log('StudentCalendar - activityHistory:', streakData?.activityHistory);
     console.log('StudentCalendar - activitySet size:', activitySet.size);
+    console.log('StudentCalendar - exercises:', exercises.length);
 
     const handlePreviousMonth = () => {
         if (currentMonth === 0) {
@@ -99,69 +149,105 @@ export default function StudentCalendar({ streakData }: StudentCalendarProps) {
     };
 
     return (
-        <div className="rounded-3xl bg-white/90 backdrop-blur border border-white/70 shadow-lg p-5">
-            {/* Month Navigation */}
-            <div className="flex items-center justify-between mb-4">
-                <button
-                    type="button"
-                    onClick={handlePreviousMonth}
-                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
-                >
-                    ← Zurück
-                </button>
-                <div className="text-center">
-                    <h3 className="text-xl font-bold text-slate-900">
-                        {MONTH_NAMES[currentMonth]} {currentYear}
-                    </h3>
-                    <button
-                        type="button"
-                        onClick={handleToday}
-                        className="text-sm text-blue-600 hover:underline mt-1"
-                    >
-                        Heute
-                    </button>
-                </div>
-                <button
-                    type="button"
-                    onClick={handleNextMonth}
-                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
-                >
-                    Weiter →
-                </button>
-            </div>
-
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-                {WEEKDAY_LABELS.map((label) => (
-                    <div key={label} className="text-center text-sm font-semibold text-slate-600 py-2">
-                        {label}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Calendar Section (2/3 width on large screens) */}
+            <div className="lg:col-span-2">
+                <div className="rounded-3xl bg-white/90 backdrop-blur border border-white/70 shadow-lg p-5">
+                    {/* Month Navigation */}
+                    <div className="flex items-center justify-between mb-4">
+                        <button
+                            type="button"
+                            onClick={handlePreviousMonth}
+                            className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
+                        >
+                            ← Zurück
+                        </button>
+                        <div className="text-center">
+                            <h3 className="text-xl font-bold text-slate-900">
+                                {MONTH_NAMES[currentMonth]} {currentYear}
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={handleToday}
+                                className="text-sm text-blue-600 hover:underline mt-1"
+                            >
+                                Heute
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleNextMonth}
+                            className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
+                        >
+                            Weiter →
+                        </button>
                     </div>
-                ))}
-            </div>
 
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-2">
-                {monthGrid.map((day, index) => (
-                    <div
-                        key={`${day.dateString}-${index}`}
-                        className={`
+                    {/* Weekday Headers */}
+                    <div className="grid grid-cols-7 gap-2 mb-2">
+                        {WEEKDAY_LABELS.map((label) => (
+                            <div key={label} className="text-center text-sm font-semibold text-slate-600 py-2">
+                                {label}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-2">
+                        {monthGrid.map((day, index) => (
+                            <div
+                                key={`${day.dateString}-${index}`}
+                                className={`
                 relative aspect-square rounded-xl border p-2 flex flex-col items-center justify-center text-sm font-semibold transition
                 ${day.isToday
-                                ? 'bg-blue-50 border-blue-500 text-blue-900 ring-2 ring-blue-500'
-                                : day.isCurrentMonth
-                                    ? day.hasActivity
-                                        ? 'bg-orange-50/50 border-orange-200 text-slate-900'
-                                        : 'bg-white border-slate-200 text-slate-700'
-                                    : 'bg-slate-50 border-slate-100 text-slate-400'
-                            }
+                                        ? 'bg-blue-50 border-blue-500 text-blue-900 ring-2 ring-blue-500'
+                                        : day.isCurrentMonth
+                                            ? day.hasActivity
+                                                ? 'bg-orange-50/50 border-orange-200 text-slate-900'
+                                                : 'bg-white border-slate-200 text-slate-700'
+                                            : 'bg-slate-50 border-slate-100 text-slate-400'
+                                    }
               `}
-                    >
-                        <span className="text-xs">{day.date.getDate()}</span>
-                        {day.hasActivity && (
-                            <Flame className="w-4 h-4 mt-1 text-orange-500 fill-orange-500" aria-label="Activity recorded" />
-                        )}
+                            >
+                                <span className="text-xs">{day.date.getDate()}</span>
+
+                                {/* Activity flame icon (streak) */}
+                                {day.hasActivity && (
+                                    <Flame className="w-4 h-4 mt-1 text-orange-500 fill-orange-500" aria-label="Activity recorded" />
+                                )}
+
+                                {/* Exercise indicators */}
+                                {(day.hasHomework || day.hasClasswork) && (
+                                    <div className="flex gap-1 mt-1">
+                                        {day.hasHomework && (
+                                            <div
+                                                className="w-2 h-2 rounded-full bg-red-500"
+                                                aria-label="Hausaufgabe"
+                                            />
+                                        )}
+                                        {day.hasClasswork && (
+                                            <div
+                                                className="w-2 h-2 rounded-full bg-blue-500"
+                                                aria-label="Klassenübung"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
-                ))}
+                </div>
+            </div>
+
+            {/* Appointments Sidebar (1/3 width on large screens) */}
+            <div className="lg:col-span-1">
+                {loading ? (
+                    <div className="rounded-3xl bg-white/90 backdrop-blur border border-white/70 shadow-lg p-5 h-full flex items-center justify-center">
+                        <p className="text-slate-500">Lädt Termine...</p>
+                    </div>
+                ) : (
+                    <AppointmentsSidebar exercises={exercises} />
+                )}
             </div>
         </div>
     );

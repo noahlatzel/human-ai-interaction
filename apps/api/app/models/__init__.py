@@ -10,6 +10,7 @@ from .discussion import (
     Notification,
 )
 from .learning import LearningSession
+from .learning_tip import LearningTip
 from .math import (
     DifficultyLevel,
     MathWordProblem,
@@ -26,6 +27,7 @@ __all__ = [
     "ExerciseStatus",
     "ExerciseType",
     "LearningSession",
+    "LearningTip",
     "MathWordProblem",
     "MathWordProblemOperation",
     "MathematicalOperation",
