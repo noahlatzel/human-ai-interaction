@@ -23,11 +23,14 @@ async def create_discussion(
         db, discussion=discussion, author_id=auth_context.user.id
     )
 
-    # Add computed fields
-    db_discussion.reply_count = 0
-    db_discussion.is_subscribed = True  # Auto-subscribed on creation
-
-    return db_discussion
+    # Return with computed fields
+    return schemas.Discussion.model_validate(
+        {
+            **db_discussion.__dict__,
+            "reply_count": 0,
+            "is_subscribed": True,  # Auto-subscribed on creation
+        }
+    )
 
 
 @router.get("/", response_model=List[schemas.Discussion])
@@ -55,13 +58,23 @@ async def list_discussions(
             )
 
         # Add computed fields
+        result = []
         for discussion in discussions:
-            discussion.reply_count = await crud.get_reply_count(db, discussion.id)
-            discussion.is_subscribed = await crud.is_subscribed(
+            reply_count = await crud.get_reply_count(db, discussion.id)
+            is_subscribed = await crud.is_subscribed(
                 db, auth_context.user.id, discussion.id
             )
+            result.append(
+                schemas.Discussion.model_validate(
+                    {
+                        **discussion.__dict__,
+                        "reply_count": reply_count,
+                        "is_subscribed": is_subscribed,
+                    }
+                )
+            )
 
-        return discussions
+        return result
     except Exception as e:
         import traceback
 
@@ -81,13 +94,15 @@ async def get_discussion(
     if not discussion:
         raise HTTPException(status_code=404, detail="Discussion not found")
 
-    # Add computed fields
-    discussion.reply_count = len(discussion.replies)
-    discussion.is_subscribed = await crud.is_subscribed(
-        db, auth_context.user.id, discussion.id
+    # Return with computed fields
+    is_subscribed = await crud.is_subscribed(db, auth_context.user.id, discussion.id)
+    return schemas.DiscussionDetail.model_validate(
+        {
+            **discussion.__dict__,
+            "reply_count": len(discussion.replies),
+            "is_subscribed": is_subscribed,
+        }
     )
-
-    return discussion
 
 
 @router.post(
