@@ -21,7 +21,6 @@ export default function CalendarMock() {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   const getMonthName = (date: Date) => date.toLocaleString('de-DE', { month: 'long' });
   const getYear = (date: Date) => date.getFullYear();
 
@@ -59,20 +58,10 @@ export default function CalendarMock() {
     [],
   );
 
-  const startOffset = firstDayOfMonth(currentDate) === 0 ? 6 : firstDayOfMonth(currentDate) - 1;
   const totalDays = daysInMonth(currentDate);
 
   const renderDays = () => {
     const cells = [];
-    for (let i = 0; i < startOffset; i += 1) {
-      cells.push(
-        <div
-          key={`empty-${i}`}
-          className="rounded-2xl border border-slate-100 bg-white/60 aspect-square"
-          aria-hidden
-        />,
-      );
-    }
     for (let day = 1; day <= totalDays; day += 1) {
       const isToday = isCurrentMonth && day === today.getDate();
       const hasEvent = events.some((evt) => evt.day === day);

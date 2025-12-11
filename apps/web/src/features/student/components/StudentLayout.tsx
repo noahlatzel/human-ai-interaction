@@ -93,7 +93,7 @@ export default function StudentLayout({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-2xl bg-white/80 border border-emerald-200 px-4 py-2 text-emerald-700 font-semibold shadow-sm">
               <span aria-hidden>🔥</span>
-              <span>{streak} Tage</span>
+              <span>{streak} {streak === 1 ? 'Tag' : 'Tage'}</span>
             </div>
             <div className="h-12 w-12 rounded-full border-2 border-white shadow overflow-hidden bg-white">
               <img src={studentAvatar} alt="Avatar" className="h-full w-full object-contain" />

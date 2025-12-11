@@ -38,33 +38,14 @@ const formatDateString = (date: Date): string => {
 };
 
 const getMonthGrid = (year: number, month: number, activitySet: Set<string>): CalendarDay[] => {
-    const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayString = formatDateString(today);
 
-    // Get day of week for first day (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-    // We want Monday = 0, so we adjust
-    const firstWeekday = firstDay.getDay();
-    const startOffset = firstWeekday === 0 ? 6 : firstWeekday - 1;
-
     const days: CalendarDay[] = [];
 
-    // Fill previous month days
-    for (let i = startOffset - 1; i >= 0; i--) {
-        const date = new Date(year, month, -i);
-        const dateString = formatDateString(date);
-        days.push({
-            date,
-            dateString,
-            isCurrentMonth: false,
-            isToday: dateString === todayString,
-            hasActivity: activitySet.has(dateString),
-        });
-    }
-
-    // Fill current month days
+    // Fill current month days only
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const date = new Date(year, month, day);
         const dateString = formatDateString(date);
@@ -72,20 +53,6 @@ const getMonthGrid = (year: number, month: number, activitySet: Set<string>): Ca
             date,
             dateString,
             isCurrentMonth: true,
-            isToday: dateString === todayString,
-            hasActivity: activitySet.has(dateString),
-        });
-    }
-
-    // Fill next month days to complete the grid (6 weeks = 42 days)
-    const remainingDays = 42 - days.length;
-    for (let day = 1; day <= remainingDays; day++) {
-        const date = new Date(year, month + 1, day);
-        const dateString = formatDateString(date);
-        days.push({
-            date,
-            dateString,
-            isCurrentMonth: false,
             isToday: dateString === todayString,
             hasActivity: activitySet.has(dateString),
         });
