@@ -158,8 +158,12 @@ async def get_user_achievements_with_progress(
                 "threshold": achievement.threshold,
                 "progress": min(current_value, achievement.threshold),
                 "unlocked": is_unlocked,
-                "unlockedAt": unlock_records.get(achievement.id).isoformat()
-                if is_unlocked and unlock_records.get(achievement.id) is not None
+                "unlockedAt": (
+                    unlocked_time.isoformat()
+                    if (unlocked_time := unlock_records.get(achievement.id))
+                    else None
+                )
+                if is_unlocked
                 else None,
             }
         )
