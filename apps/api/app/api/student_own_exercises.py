@@ -192,7 +192,7 @@ async def process_image(
     """Process an uploaded image and extract exercise data using OpenAI Vision."""
     # Read image bytes
     image_bytes = await file.read()
-    
+
     # Process with OpenAI Vision API
     return await service.process_image_with_openai(image_bytes)
 

@@ -109,6 +109,7 @@ async def delete_exercise(
 async def process_image_mock() -> ImageProcessResponse:
     """Mock image processing with 2-second delay."""
     import asyncio
+
     await asyncio.sleep(2)
 
     return ImageProcessResponse(
@@ -125,20 +126,23 @@ async def process_image_mock() -> ImageProcessResponse:
 async def process_image_with_openai(image_bytes: bytes) -> ImageProcessResponse:
     """Process image using OpenAI Vision API."""
     settings = get_settings()
-    
-    if not settings.openai_api_key or settings.openai_api_key == "your-openai-api-key-here":
+
+    if (
+        not settings.openai_api_key
+        or settings.openai_api_key == "your-openai-api-key-here"
+    ):
         # Fallback to mock if no API key configured
         print("⚠️  No OpenAI API key configured, using mock data")
         return await process_image_mock()
-    
+
     print(f"🔑 Using OpenAI API key: {settings.openai_api_key[:10]}...")
-    
+
     client = AsyncOpenAI(api_key=settings.openai_api_key)
-    
+
     # Encode image to base64
     image_base64 = base64.b64encode(image_bytes).decode("utf-8")
     print(f"📷 Image encoded, size: {len(image_bytes)} bytes")
-    
+
     prompt = """Analysiere dieses Bild einer mathematischen Textaufgabe für Grundschüler.
 
 Extrahiere folgende Informationen und gib sie im JSON-Format zurück:
@@ -160,7 +164,7 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
   "metric": "Äpfel",
   "steps": "1. ...\n2. ...\n3. ..."
 }"""
-    
+
     try:
         print(f"🤖 Calling OpenAI with model: gpt-4o-mini")
         response = await client.chat.completions.create(
@@ -182,16 +186,17 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
             max_tokens=1000,
             temperature=0.3,
         )
-        
+
         print(f"✅ OpenAI response received")
         content = response.choices[0].message.content
         if not content:
             raise ValueError("Empty response from OpenAI")
-        
+
         print(f"📝 Response content: {content[:200]}...")
-        
+
         # Parse JSON from response
         import json
+
         # Remove markdown code blocks if present
         content = content.strip()
         if content.startswith("```json"):
@@ -201,10 +206,10 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
         if content.endswith("```"):
             content = content[:-3]
         content = content.strip()
-        
+
         data = json.loads(content)
         print(f"✅ Successfully parsed JSON response")
-        
+
         return ImageProcessResponse(
             problem=data.get("problem", ""),
             difficulty=data.get("difficulty", "mittel"),
@@ -218,6 +223,7 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
         # On error, return mock data
         print(f"❌ OpenAI Vision error: {type(e).__name__}: {e}")
         import traceback
+
         traceback.print_exc()
         print("⚠️  Falling back to mock data")
         return await process_image_mock()

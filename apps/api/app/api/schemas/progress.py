@@ -25,7 +25,7 @@ class ProgressSetRequest(BaseModel):
     success: bool
     source: Optional[ExerciseSource] = Field(
         default="home_practice",
-        description="Source category of the exercise: home_practice, class_exercises, or own_exercises"
+        description="Source category of the exercise: home_practice, class_exercises, or own_exercises",
     )
 
 

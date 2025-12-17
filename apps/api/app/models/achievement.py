@@ -19,7 +19,12 @@ class UserAchievement(Base):
 
     __tablename__ = "user_achievements"
     __table_args__ = (
-        Index("ix_user_achievements_user_achievement", "user_id", "achievement_id", unique=True),
+        Index(
+            "ix_user_achievements_user_achievement",
+            "user_id",
+            "achievement_id",
+            unique=True,
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

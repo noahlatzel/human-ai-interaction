@@ -70,9 +70,7 @@ async def increment_solved_count(
     return stats
 
 
-async def get_unlocked_achievement_ids(
-    session: AsyncSession, user_id: str
-) -> set[str]:
+async def get_unlocked_achievement_ids(session: AsyncSession, user_id: str) -> set[str]:
     """Get set of already unlocked achievement IDs for a user."""
     query = select(UserAchievement.achievement_id).where(
         UserAchievement.user_id == user_id
@@ -101,7 +99,7 @@ async def check_and_unlock_achievements(
 ) -> list[AchievementDefinition]:
     """
     Check all achievements against current statistics and unlock any newly earned ones.
-    
+
     Returns list of newly unlocked achievements.
     """
     unlocked_ids = await get_unlocked_achievement_ids(session, user_id)
@@ -130,7 +128,7 @@ async def get_user_achievements_with_progress(
 ) -> list[dict]:
     """
     Get all achievements with unlock status and progress for a user.
-    
+
     Returns list of dicts with achievement info, progress, and unlock status.
     """
     stats = await get_or_create_statistics(session, user_id)
@@ -139,32 +137,38 @@ async def get_user_achievements_with_progress(
     # Get unlock timestamps
     query = select(UserAchievement).where(UserAchievement.user_id == user_id)
     result = await session.execute(query)
-    unlock_records = {ua.achievement_id: ua.unlocked_at for ua in result.scalars().all()}
+    unlock_records = {
+        ua.achievement_id: ua.unlocked_at for ua in result.scalars().all()
+    }
 
     achievements_data = []
     for achievement in ACHIEVEMENT_DEFINITIONS:
-        current_value = getattr(stats, achievement.stat_field, 0) if achievement.stat_field else 0
+        current_value = (
+            getattr(stats, achievement.stat_field, 0) if achievement.stat_field else 0
+        )
         is_unlocked = achievement.id in unlocked_ids
 
-        achievements_data.append({
-            "id": achievement.id,
-            "title": achievement.title,
-            "description": achievement.description,
-            "icon": achievement.icon,
-            "category": achievement.category.value,
-            "rarity": achievement.rarity.value,
-            "threshold": achievement.threshold,
-            "progress": min(current_value, achievement.threshold),
-            "unlocked": is_unlocked,
-            "unlockedAt": unlock_records.get(achievement.id).isoformat() if is_unlocked and unlock_records.get(achievement.id) else None,
-        })
+        achievements_data.append(
+            {
+                "id": achievement.id,
+                "title": achievement.title,
+                "description": achievement.description,
+                "icon": achievement.icon,
+                "category": achievement.category.value,
+                "rarity": achievement.rarity.value,
+                "threshold": achievement.threshold,
+                "progress": min(current_value, achievement.threshold),
+                "unlocked": is_unlocked,
+                "unlockedAt": unlock_records.get(achievement.id).isoformat()
+                if is_unlocked and unlock_records.get(achievement.id)
+                else None,
+            }
+        )
 
     return achievements_data
 
 
-async def get_user_statistics_summary(
-    session: AsyncSession, user_id: str
-) -> dict:
+async def get_user_statistics_summary(session: AsyncSession, user_id: str) -> dict:
     """Get a summary of user statistics."""
     stats = await get_or_create_statistics(session, user_id)
     unlocked_ids = await get_unlocked_achievement_ids(session, user_id)

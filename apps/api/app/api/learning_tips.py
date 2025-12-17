@@ -66,16 +66,18 @@ async def list_learning_tips(
     if actor.user.role == "student":
         # Ensure classroom is loaded for students
         from app.models import User
-        
-        user_query = select(User).where(User.id == actor.user.id).options(
-            selectinload(User.classroom)
+
+        user_query = (
+            select(User)
+            .where(User.id == actor.user.id)
+            .options(selectinload(User.classroom))
         )
         user_result = await session.execute(user_query)
         user = user_result.scalar_one_or_none()
-        
+
         if not user or not user.classroom or not user.classroom.teacher_id:
             return []
-        
+
         query = select(LearningTip).where(
             LearningTip.teacher_id == user.classroom.teacher_id
         )

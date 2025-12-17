@@ -66,25 +66,29 @@ async def list_achievements(
 
     unlocked_count = sum(1 for a in achievements_data if a["unlocked"])
 
-    return AchievementsListResponse.model_validate({
-        "achievements": [
-            AchievementResponse.model_validate({
-                "id": a["id"],
-                "title": a["title"],
-                "description": a["description"],
-                "icon": a["icon"],
-                "category": a["category"],
-                "rarity": a["rarity"],
-                "threshold": a["threshold"],
-                "progress": a["progress"],
-                "unlocked": a["unlocked"],
-                "unlockedAt": a["unlockedAt"],
-            })
-            for a in achievements_data
-        ],
-        "totalUnlocked": unlocked_count,
-        "totalAchievements": len(achievements_data),
-    })
+    return AchievementsListResponse.model_validate(
+        {
+            "achievements": [
+                AchievementResponse.model_validate(
+                    {
+                        "id": a["id"],
+                        "title": a["title"],
+                        "description": a["description"],
+                        "icon": a["icon"],
+                        "category": a["category"],
+                        "rarity": a["rarity"],
+                        "threshold": a["threshold"],
+                        "progress": a["progress"],
+                        "unlocked": a["unlocked"],
+                        "unlockedAt": a["unlockedAt"],
+                    }
+                )
+                for a in achievements_data
+            ],
+            "totalUnlocked": unlocked_count,
+            "totalAchievements": len(achievements_data),
+        }
+    )
 
 
 @router.get("/statistics", response_model=StatisticsSummaryResponse)
