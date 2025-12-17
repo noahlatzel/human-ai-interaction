@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import UserAchievement, UserStatistics
 from app.services.achievement_definitions import (
-    ACHIEVEMENTS_BY_ID,
     ACHIEVEMENTS_BY_STAT,
     ACHIEVEMENT_DEFINITIONS,
     AchievementDefinition,

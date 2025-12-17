@@ -166,7 +166,7 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
 }"""
 
     try:
-        print(f"🤖 Calling OpenAI with model: gpt-4o-mini")
+        print("🤖 Calling OpenAI with model: gpt-4o-mini")
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -187,7 +187,7 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
             temperature=0.3,
         )
 
-        print(f"✅ OpenAI response received")
+        print("✅ OpenAI response received")
         content = response.choices[0].message.content
         if not content:
             raise ValueError("Empty response from OpenAI")
@@ -208,7 +208,7 @@ Antworte NUR mit einem JSON-Objekt in diesem Format:
         content = content.strip()
 
         data = json.loads(content)
-        print(f"✅ Successfully parsed JSON response")
+        print("✅ Successfully parsed JSON response")
 
         return ImageProcessResponse(
             problem=data.get("problem", ""),
