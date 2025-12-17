@@ -86,6 +86,11 @@ class Settings(BaseSettings):
         default=24.0, description="Absolute maximum session lifetime (hours)."
     )
 
+    openai_api_key: str = Field(
+        default="",
+        description="OpenAI API Key for image processing (GPT-4 Vision)",
+    )
+
     @field_validator("allowed_origins", mode="before")
     @classmethod
     def split_origins(cls, value: object) -> list[str]:

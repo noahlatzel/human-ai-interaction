@@ -53,6 +53,11 @@ async function request<TResponse>(path: string, options: RequestOptions = {}): P
     signal,
   });
 
+  // Handle 204 No Content responses - return undefined/null as TResponse
+  if (response.status === 204) {
+    return undefined as TResponse;
+  }
+
   const contentType = response.headers.get('content-type') ?? '';
   const isJson = contentType.includes('application/json');
   const data = isJson ? await response.json() : await response.text();

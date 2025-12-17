@@ -2,3 +2,6 @@ docs/
 plans/
 
 .DS_STORE
+*env.localapps/api/auth.db.backup
+apps/api/api_logs.txt
+uvicorn.log

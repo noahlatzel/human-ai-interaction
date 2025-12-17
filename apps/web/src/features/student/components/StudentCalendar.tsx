@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Flame } from 'lucide-react';
 import type { StreakResponse } from '../../../types/progress';
 import type { ClassExercise } from '../../../types/classExercise';
-import { getStudentClassExercises } from '../api/classExercises';
 import AppointmentsSidebar from './AppointmentsSidebar';
 
 type StudentCalendarProps = {
     streakData: StreakResponse | null;
+    exercises: ClassExercise[];
 };
 
 type CalendarDay = {
@@ -74,31 +74,10 @@ const getMonthGrid = (
     return days;
 };
 
-export default function StudentCalendar({ streakData }: StudentCalendarProps) {
+export default function StudentCalendar({ streakData, exercises }: StudentCalendarProps) {
     const today = new Date();
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-    const [exercises, setExercises] = useState<ClassExercise[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    // Fetch class exercises for the authenticated student
-    useEffect(() => {
-        const fetchExercises = async () => {
-            setLoading(true);
-            try {
-                const data = await getStudentClassExercises();
-                setExercises(data);
-            } catch (error) {
-                console.error('Failed to fetch class exercises:', error);
-                // Silently fail - student might not have a class assigned
-                setExercises([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchExercises();
-    }, []);
 
     // Create sets for homework and classwork dates
     const homeworkDates = new Set<string>();
@@ -117,12 +96,6 @@ export default function StudentCalendar({ streakData }: StudentCalendarProps) {
 
     const activitySet = new Set(streakData?.activityHistory ?? []);
     const monthGrid = getMonthGrid(currentYear, currentMonth, activitySet, homeworkDates, classworkDates);
-
-    // Debug: Log streak data to console
-    console.log('StudentCalendar - streakData:', streakData);
-    console.log('StudentCalendar - activityHistory:', streakData?.activityHistory);
-    console.log('StudentCalendar - activitySet size:', activitySet.size);
-    console.log('StudentCalendar - exercises:', exercises.length);
 
     const handlePreviousMonth = () => {
         if (currentMonth === 0) {
@@ -241,13 +214,7 @@ export default function StudentCalendar({ streakData }: StudentCalendarProps) {
 
             {/* Appointments Sidebar (1/3 width on large screens) */}
             <div className="lg:col-span-1">
-                {loading ? (
-                    <div className="rounded-3xl bg-white/90 backdrop-blur border border-white/70 shadow-lg p-5 h-full flex items-center justify-center">
-                        <p className="text-slate-500">Lädt Termine...</p>
-                    </div>
-                ) : (
-                    <AppointmentsSidebar exercises={exercises} />
-                )}
+                <AppointmentsSidebar exercises={exercises} />
             </div>
         </div>
     );

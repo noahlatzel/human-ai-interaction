@@ -11,6 +11,7 @@ from .discussion import (
 )
 from .learning import LearningSession
 from .learning_tip import LearningTip
+from .student_own_exercise import StudentOwnExercise
 from .math import (
     DifficultyLevel,
     MathWordProblem,
@@ -18,7 +19,10 @@ from .math import (
     MathematicalOperation,
 )
 from .progress import MathWordProblemProgress
+from .own_exercise_progress import OwnExerciseProgress
 from .session import UserSession
+from .statistics import UserStatistics
+from .achievement import UserAchievement
 from .user import User, UserRefreshToken
 
 __all__ = [
@@ -28,6 +32,7 @@ __all__ = [
     "ExerciseType",
     "LearningSession",
     "LearningTip",
+    "StudentOwnExercise",
     "MathWordProblem",
     "MathWordProblemOperation",
     "MathematicalOperation",
@@ -40,8 +45,11 @@ __all__ = [
     "DiscussionSubscription",
     "Notification",
     "User",
+    "UserAchievement",
     "UserRefreshToken",
     "UserSession",
+    "UserStatistics",
+    "OwnExerciseProgress",
     "format_timestamp",
     "utcnow",
 ]

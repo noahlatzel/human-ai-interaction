@@ -9,13 +9,20 @@ import ScratchPadText from '../components/ScratchPadText';
 import AnswerForm from '../components/AnswerForm';
 import { useProblem } from '../hooks/useProblem';
 import { submitProgress } from '../../student/api/submitProgress';
+import { studentOwnExercisesApi } from '../../student/api/studentOwnExercises';
 import { ROUTES } from '../../../lib/routes';
 import forestBackground from '../../../assets/forestBackground.png';
 import companion from '../../../assets/companion.png';
-import type { MathWordProblem } from '../../../types/problem';
+import type { MathWordProblem, MathematicalOperation } from '../../../types/problem';
+import type { StudentOwnExercise } from '../../../types/studentOwnExercise';
+import type { ExerciseSource } from '../../../types/progress';
 
 type LocationState = {
   problems?: MathWordProblem[];
+  studentExercise?: StudentOwnExercise;
+  source?: ExerciseSource;
+  exerciseId?: string;
+  exerciseTab?: 'practice' | 'class' | 'own';
 };
 
 export default function ProblemPage() {
@@ -28,23 +35,92 @@ export default function ProblemPage() {
   const [textAnswer, setTextAnswer] = useState('');
   const [, setSketch] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [wrongAttempts, setWrongAttempts] = useState(0);
 
-  const { problem, loading, error, notFound, refresh } = useProblem(
+  const isStudentExercise = !!state?.studentExercise;
+  const studentExercise = state?.studentExercise;
+
+  console.log('ProblemPage Debug:', {
+    isStudentExercise,
+    studentExercise,
+    problemId,
+    state
+  });
+
+  // Convert StudentOwnExercise to MathWordProblem format
+  const convertedProblem: MathWordProblem | null = useMemo(() => {
+    if (!isStudentExercise || !studentExercise) return null;
+
+    // Map English difficulty levels to German
+    const difficultyMap: Record<string, 'einfach' | 'mittel' | 'schwierig'> = {
+      'easy': 'einfach',
+      'medium': 'mittel',
+      'hard': 'schwierig',
+      'einfach': 'einfach',
+      'mittel': 'mittel',
+      'schwierig': 'schwierig',
+    };
+
+    // Map questionType to MathematicalOperation
+    const operationMap: Record<string, MathematicalOperation> = {
+      'addition': 'addition',
+      'subtraction': 'subtraction',
+      'multiplication': 'multiplication',
+      'division': 'division',
+      'Addition': 'addition',
+      'Subtraktion': 'subtraction',
+      'Multiplikation': 'multiplication',
+      'Division': 'division',
+    };
+
+    const operation = studentExercise.questionType
+      ? operationMap[studentExercise.questionType]
+      : undefined;
+
+    return {
+      id: studentExercise.id,
+      problemDescription: studentExercise.problem,
+      solution: String(studentExercise.answer),
+      grade: studentExercise.grade ? parseInt(studentExercise.grade) : 3,
+      difficulty: difficultyMap[studentExercise.difficulty?.toLowerCase() || 'medium'] || 'mittel',
+      operations: operation ? [operation] : [],
+      hints: [], // Steps werden nur in der Avatar-Sprechblase angezeigt
+    };
+  }, [isStudentExercise, studentExercise]);
+
+  console.log('Converted Problem:', convertedProblem);
+
+  const hookResult = useProblem(
     problemId ?? '',
     state?.problems,
   );
 
+  // Use hook results only for regular problems, ignore for student exercises
+  const { problem: fetchedProblem, loading, error, notFound, refresh } = isStudentExercise
+    ? { problem: null, loading: false, error: null, notFound: false, refresh: async () => { } }
+    : hookResult;
+
+  const problem = isStudentExercise ? convertedProblem : fetchedProblem;
+
+  console.log('Final problem:', problem, 'loading:', loading, 'error:', error, 'notFound:', notFound);
+
+  // Reset wrong attempts when problem changes
   useEffect(() => {
-    if (notFound && !loading) {
+    setWrongAttempts(0);
+    setTextAnswer('');
+  }, [problemId, isStudentExercise]);
+
+  useEffect(() => {
+    if (notFound && !loading && !isStudentExercise) {
       toast.error('Diese Aufgabe wurde nicht gefunden.');
       navigate(ROUTES.dashboard, { replace: true });
     }
-  }, [loading, navigate, notFound]);
+  }, [loading, navigate, notFound, isStudentExercise]);
 
   const hint = useMemo(() => {
     const hints = (problem?.hints ?? []).filter((value): value is string => Boolean(value));
     if (hints.length > 0) return hints[0];
-    return 'Wenn du feststeckst, versuche den Aufgabentext zu markieren und die wichtigen Zahlen zu finden.';
+    return 'Wenn du feststeckst, hat das Eichhörnchen möglicherweise einen Tipp für dich.';
   }, [problem?.hints]);
 
   const normalize = (value: string) =>
@@ -58,11 +134,26 @@ export default function ProblemPage() {
     setSubmitting(true);
     try {
       const success = normalize(textAnswer) === normalize(problem.solution);
-      await submitProgress({ mathWordProblemId: problem.id, success });
-      if (success) {
-        await reloadUser();
+
+      // Track wrong attempts
+      if (!success) {
+        setWrongAttempts(prev => prev + 1);
       }
-      toast.success(success ? 'Richtig! Fortschritt gespeichert.' : 'Gespeichert, aber Lösung prüfen.');
+
+      // Only submit progress for regular problems, not student exercises
+      if (!isStudentExercise) {
+        // Determine source from location state, default to home_practice
+        const source: ExerciseSource = state?.source || 'home_practice';
+        await submitProgress({ mathWordProblemId: problem.id, success, source });
+        if (success) {
+          await reloadUser();
+        }
+        toast.success(success ? 'Richtig! Fortschritt gespeichert.' : 'Gespeichert, aber Lösung prüfen.');
+      } else if (studentExercise) {
+        // Track own exercise for achievements
+        await studentOwnExercisesApi.solve(studentExercise.id, success);
+        toast.success(success ? 'Richtig gelöst!' : 'Leider falsch. Versuche es nochmal!');
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Konnte Fortschritt nicht speichern';
       toast.error(message);
@@ -75,7 +166,7 @@ export default function ProblemPage() {
     navigate(ROUTES.dashboard);
   };
 
-  if (loading) {
+  if (loading && !isStudentExercise) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-slate-700 font-semibold">Lade Aufgabe...</div>
@@ -83,7 +174,7 @@ export default function ProblemPage() {
     );
   }
 
-  if (error) {
+  if (error && !isStudentExercise) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-emerald-50">
         <div className="rounded-3xl border border-rose-100 bg-white shadow-lg p-6 space-y-3 text-center">
@@ -117,7 +208,19 @@ export default function ProblemPage() {
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 relative z-10">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // Navigate back to dashboard with exercise context to show the exercise detail view
+            if (state?.exerciseId && state?.exerciseTab) {
+              navigate(ROUTES.dashboard, {
+                state: {
+                  returnToExercise: state.exerciseId,
+                  returnToTab: state.exerciseTab
+                }
+              });
+            } else {
+              navigate(ROUTES.dashboard);
+            }
+          }}
           className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all hover:-translate-y-0.5"
         >
           <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
@@ -135,7 +238,11 @@ export default function ProblemPage() {
               <path d="m15 18-6-6 6-6" />
             </svg>
           </div>
-          <span className="text-lg">Zurück zur Übersicht</span>
+          <span className="text-lg">
+            {state?.exerciseId
+              ? (state?.exerciseTab === 'practice' ? 'Zurück zur Hausaufgabe' : 'Zurück zur Klassenübung')
+              : 'Zurück zur Übersicht'}
+          </span>
         </button>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
@@ -164,6 +271,11 @@ export default function ProblemPage() {
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-slate-900">Deine Lösung (Text)</h2>
                 <ScratchPadText value={textAnswer} onChange={setTextAnswer} />
+                {wrongAttempts > 0 && (
+                  <p className="text-sm text-amber-700 font-medium">
+                    Falsche Versuche: {wrongAttempts}
+                  </p>
+                )}
               </div>
 
               <AnswerForm isSubmitting={submitting} onSubmit={handleSubmit} onNext={handleNext} />
@@ -176,10 +288,24 @@ export default function ProblemPage() {
         <div className="relative rounded-2xl bg-white/95 border border-emerald-100 shadow-xl p-4 max-w-[15rem] mb-48 -mr-20 z-10">
           <div className="absolute -right-2 bottom-6 w-4 h-4 bg-white/95 border-r border-b border-emerald-100 transform -rotate-45"></div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-emerald-700">Brauchst du Hilfe?</p>
-            <p className="text-sm text-slate-600">
-              Bald kannst du hier Tipps oder den Lernbegleiter öffnen.
-            </p>
+            {wrongAttempts >= 2 && isStudentExercise && studentExercise?.steps ? (
+              <>
+                <p className="text-sm font-semibold text-emerald-700">Hier ist ein Tipp:</p>
+                <p className="text-sm text-slate-600">{studentExercise.steps}</p>
+              </>
+            ) : wrongAttempts === 1 ? (
+              <>
+                <p className="text-sm font-semibold text-amber-700">Versuche es nochmal!</p>
+                <p className="text-sm text-slate-600">Bei einem weiteren Fehler bekommst du einen Hinweis.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-emerald-700">Brauchst du Hilfe?</p>
+                <p className="text-sm text-slate-600">
+                  Bald kannst du hier Tipps oder den Lernbegleiter öffnen.
+                </p>
+              </>
+            )}
           </div>
         </div>
         <img src={companion} alt="Begleiter" className="w-80 h-80 object-contain drop-shadow-lg relative z-0" />

@@ -40,6 +40,7 @@ async def set_math_progress(
         student_id=actor.uid,
         problem_id=payload.math_word_problem_id,
         success=payload.success,
+        source=payload.source or "home_practice",
     )
     await session.commit()
     return ProgressPayload.from_model(record)
@@ -85,6 +86,19 @@ async def get_user_streak(
             "activityHistory": result.activity_history,
         }
     )
+
+
+@router.get(
+    "/my-solved",
+    response_model=list[str],
+)
+async def get_my_solved_problems(
+    actor: AuthContext = Depends(require_roles("student")),
+    session: AsyncSession = Depends(get_db_session),
+) -> list[str]:
+    """Return list of problem IDs that the student has successfully solved."""
+    solved_ids = await math_progress.get_solved_problem_ids(session, actor.uid)
+    return list(solved_ids)
 
 
 __all__ = ["router"]

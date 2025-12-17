@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from .session import UserSession
     from .learning import LearningSession
     from .learning_tip import LearningTip
+    from .student_own_exercise import StudentOwnExercise
+    from .statistics import UserStatistics
+    from .achievement import UserAchievement
     from .discussion import (
         Discussion,
         DiscussionReply,
@@ -53,12 +56,12 @@ class User(Base):
     refresh_tokens: Mapped[list["UserRefreshToken"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
     sessions: Mapped[list["UserSession"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
     classroom: Mapped[Optional["Classroom"]] = relationship(
         "Classroom",
@@ -71,38 +74,54 @@ class User(Base):
         back_populates="teacher",
         cascade="all, delete-orphan",
         foreign_keys="Classroom.teacher_id",
-        lazy="selectin",
+        lazy="noload",
     )
     learning_sessions: Mapped[list["LearningSession"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
 
     discussions: Mapped[list["Discussion"]] = relationship(
         back_populates="author",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
     discussion_replies: Mapped[list["DiscussionReply"]] = relationship(
         back_populates="author",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
     discussion_subscriptions: Mapped[list["DiscussionSubscription"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
     notifications: Mapped[list["Notification"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
     )
     learning_tips: Mapped[list["LearningTip"]] = relationship(
         back_populates="teacher",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
+    )
+    own_exercises: Mapped[list["StudentOwnExercise"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
+    statistics: Mapped[Optional["UserStatistics"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+        lazy="noload",
+    )
+    achievements: Mapped[list["UserAchievement"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="noload",
     )
 
     def to_public_dict(self) -> dict[str, Any]:
