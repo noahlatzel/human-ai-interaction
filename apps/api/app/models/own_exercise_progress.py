@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, utcnow
 
 if TYPE_CHECKING:
-    from .learning import StudentOwnExercise
+    from .student_own_exercise import StudentOwnExercise
     from .user import User
 
 

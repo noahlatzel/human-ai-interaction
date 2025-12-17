@@ -159,7 +159,7 @@ async def get_user_achievements_with_progress(
                 "progress": min(current_value, achievement.threshold),
                 "unlocked": is_unlocked,
                 "unlockedAt": unlock_records.get(achievement.id).isoformat()
-                if is_unlocked and unlock_records.get(achievement.id)
+                if is_unlocked and unlock_records.get(achievement.id) is not None
                 else None,
             }
         )
