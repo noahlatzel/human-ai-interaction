@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.math_progress import StudentProgressStats
 from app.services.streak import WeeklyActivityDay as WeeklyActivityDayData
 from app.models import MathWordProblemProgress
+
+
+# Source of the exercise being solved
+ExerciseSource = Literal["home_practice", "class_exercises", "own_exercises"]
 
 
 class ProgressSetRequest(BaseModel):
@@ -19,6 +23,10 @@ class ProgressSetRequest(BaseModel):
 
     math_word_problem_id: str = Field(alias="mathWordProblemId", min_length=1)
     success: bool
+    source: Optional[ExerciseSource] = Field(
+        default="home_practice",
+        description="Source category of the exercise: home_practice, class_exercises, or own_exercises"
+    )
 
 
 class ProgressPayload(BaseModel):

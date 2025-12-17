@@ -1,6 +1,9 @@
+export type ExerciseSource = 'home_practice' | 'class_exercises' | 'own_exercises';
+
 export interface ProgressSetRequest {
   mathWordProblemId: string;
   success: boolean;
+  source?: ExerciseSource;
 }
 
 export interface ProgressPayload {

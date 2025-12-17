@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast, Optional
+from typing import cast, Literal, Optional
 from uuid import uuid4
 
 from sqlalchemy import case, func, select
@@ -16,6 +16,11 @@ from app.models import (
     MathWordProblemProgress,
     User,
 )
+from app.services import achievements
+
+
+# Source types for exercises
+ExerciseSource = Literal["home_practice", "class_exercises", "own_exercises"]
 
 
 @dataclass
@@ -53,6 +58,7 @@ async def set_progress(
     student_id: str,
     problem_id: str,
     success: bool,
+    source: ExerciseSource = "home_practice",
 ) -> MathWordProblemProgress:
     """Create or update a student's progress record for a problem."""
     stmt = select(MathWordProblemProgress).where(
@@ -76,7 +82,7 @@ async def set_progress(
         )
         session.add(record)
 
-    # If newly solved (success=True and wasn't already solved), award XP
+    # If newly solved (success=True and wasn't already solved), award XP and update stats
     if success and not was_already_solved:
         # Fetch problem to get difficulty
         problem_stmt = select(MathWordProblem).where(MathWordProblem.id == problem_id)
@@ -102,9 +108,32 @@ async def set_progress(
                 user.xp += xp_gain
                 session.add(user)
 
+                # Update statistics by source category
+                stats = await achievements.increment_solved_count(
+                    session, student_id, source
+                )
+
+                # Check and unlock any new achievements
+                await achievements.check_and_unlock_achievements(
+                    session, student_id, stats
+                )
+
     await session.flush()
     await session.refresh(record)
     return record
+
+
+async def get_solved_problem_ids(
+    session: AsyncSession,
+    student_id: str,
+) -> set[str]:
+    """Return set of problem IDs that the student has successfully solved."""
+    query = select(MathWordProblemProgress.math_word_problem_id).where(
+        MathWordProblemProgress.student_id == student_id,
+        MathWordProblemProgress.success.is_(True),
+    )
+    result = await session.execute(query)
+    return set(result.scalars().all())
 
 
 async def summarize_progress(

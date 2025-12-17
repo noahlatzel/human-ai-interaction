@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .api.router import api_router
 from .config import get_settings
@@ -59,6 +61,11 @@ def create_app() -> FastAPI:
     )
     app.middleware("http")(session_middleware)
     app.include_router(api_router, prefix=settings.api_prefix)
+
+    # Mount static files for uploaded images
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    uploads_dir.mkdir(exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
     @app.get("/healthz")
     async def healthcheck() -> dict[str, str]:

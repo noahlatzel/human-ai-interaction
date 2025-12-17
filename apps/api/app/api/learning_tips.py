@@ -7,6 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.auth import AuthContext, require_roles
 from app.dependencies import get_db_session
@@ -63,11 +64,20 @@ async def list_learning_tips(
     """List learning tips for the authenticated user."""
     # Students see tips from their teacher, teachers see their own tips
     if actor.user.role == "student":
-        # Get student's classroom teacher's tips
-        if not actor.user.classroom or not actor.user.classroom.teacher_id:
+        # Ensure classroom is loaded for students
+        from app.models import User
+        
+        user_query = select(User).where(User.id == actor.user.id).options(
+            selectinload(User.classroom)
+        )
+        user_result = await session.execute(user_query)
+        user = user_result.scalar_one_or_none()
+        
+        if not user or not user.classroom or not user.classroom.teacher_id:
             return []
+        
         query = select(LearningTip).where(
-            LearningTip.teacher_id == actor.user.classroom.teacher_id
+            LearningTip.teacher_id == user.classroom.teacher_id
         )
     else:
         # Teachers see their own tips
