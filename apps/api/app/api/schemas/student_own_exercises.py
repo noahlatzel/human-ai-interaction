@@ -7,36 +7,41 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.api.schemas.math_analysis import Language, MathProblemAnalysis
+
 
 class StudentOwnExerciseBase(BaseModel):
     """Base schema for student own exercise."""
 
-    problem: str = Field(..., min_length=1)
-    difficulty: str
-    answer: float
-    grade: Optional[str] = None
-    question_type: Optional[str] = Field(None, serialization_alias="questionType")
-    metric: Optional[str] = None
-    steps: Optional[str] = None
+    model_config = ConfigDict(populate_by_name=True)
+
+    problem_text: str = Field(
+        ...,
+        min_length=1,
+        validation_alias="problemText",
+        serialization_alias="problemText",
+    )
+    analysis: MathProblemAnalysis
+    language: Language = Field(default="en")
 
 
 class StudentOwnExerciseCreate(StudentOwnExerciseBase):
     """Schema for creating a student own exercise."""
 
-    image_path: Optional[str] = Field(None, serialization_alias="imagePath")
-
 
 class StudentOwnExerciseUpdate(BaseModel):
     """Schema for updating a student own exercise."""
 
-    problem: Optional[str] = Field(None, min_length=1)
-    difficulty: Optional[str] = None
-    answer: Optional[float] = None
-    grade: Optional[str] = None
-    question_type: Optional[str] = Field(None, serialization_alias="questionType")
-    metric: Optional[str] = None
-    steps: Optional[str] = None
-    image_path: Optional[str] = Field(None, serialization_alias="imagePath")
+    model_config = ConfigDict(populate_by_name=True)
+
+    problem_text: Optional[str] = Field(
+        None,
+        min_length=1,
+        validation_alias="problemText",
+        serialization_alias="problemText",
+    )
+    analysis: Optional[MathProblemAnalysis] = None
+    language: Optional[Language] = None
 
 
 class StudentOwnExerciseResponse(StudentOwnExerciseBase):
@@ -46,26 +51,16 @@ class StudentOwnExerciseResponse(StudentOwnExerciseBase):
 
     id: str
     user_id: str = Field(serialization_alias="userId")
-    image_path: Optional[str] = Field(None, serialization_alias="imagePath")
+    difficulty_level: str = Field(
+        validation_alias="difficultyLevel",
+        serialization_alias="difficultyLevel",
+    )
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
-
-
-class ImageProcessResponse(BaseModel):
-    """Schema for image process response (mock data)."""
-
-    problem: str
-    difficulty: str
-    grade: str
-    question_type: str = Field(serialization_alias="questionType")
-    answer: float
-    metric: str
-    steps: str
 
 
 __all__ = [
     "StudentOwnExerciseCreate",
     "StudentOwnExerciseUpdate",
     "StudentOwnExerciseResponse",
-    "ImageProcessResponse",
 ]

@@ -124,19 +124,19 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
     )
     teacher_tokens = login(client, teacher_email, "teachpw")
 
-    create_problem(
+    created_medium = create_problem(
         client,
         teacher_tokens["accessToken"],
         problem_text="Add and subtract.",
         analysis=build_analysis("medium"),
     )
-    create_problem(
+    created_hard = create_problem(
         client,
         teacher_tokens["accessToken"],
         problem_text="Add and multiply.",
         analysis=build_analysis("hard"),
     )
-    create_problem(
+    created_easy = create_problem(
         client,
         teacher_tokens["accessToken"],
         problem_text="Subtract then add.",
@@ -145,8 +145,15 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
 
     sort_resp = client.get("/v1/math-problems", params={"difficultyOrder": "desc"})
     assert sort_resp.status_code == 200
-    difficulties = [item["difficultyLevel"] for item in sort_resp.json()["problems"]]
-    assert difficulties == ["hard", "medium", "easy"]
+    problems = sort_resp.json()["problems"]
+    difficulties = [item["difficultyLevel"] for item in problems]
+    order = {"easy": 1, "medium": 2, "hard": 3}
+    assert all(
+        order[left] >= order[right]
+        for left, right in zip(difficulties, difficulties[1:])
+    )
+    ids = {item["id"] for item in problems}
+    assert {created_easy["id"], created_medium["id"], created_hard["id"]}.issubset(ids)
 
 
 def test_student_lists_only_matching_grade(client: TestClient) -> None:

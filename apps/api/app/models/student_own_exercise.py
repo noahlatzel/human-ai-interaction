@@ -3,18 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Any
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from .base import Base, utcnow
 from .user import User
-
-
-def utcnow() -> datetime:
-    """Return the current UTC time."""
-    return datetime.utcnow()
 
 
 class StudentOwnExercise(Base):
@@ -29,14 +24,10 @@ class StudentOwnExercise(Base):
         nullable=False,
         index=True,
     )
-    problem: Mapped[str] = mapped_column(Text, nullable=False)
-    difficulty: Mapped[str] = mapped_column(String(50), nullable=False)
-    answer: Mapped[float] = mapped_column(Float, nullable=False)
-    grade: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
-    question_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    metric: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    steps: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    image_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    problem_text: Mapped[str] = mapped_column(Text, nullable=False)
+    analysis: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    language: Mapped[str] = mapped_column(String(5), nullable=False, default="en")
+    difficulty_level: Mapped[str] = mapped_column(String(10), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False
     )

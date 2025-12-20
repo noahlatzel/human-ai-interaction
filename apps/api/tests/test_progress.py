@@ -203,6 +203,9 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     problem_two = create_problem(
         client, teacher_tokens["accessToken"], description="P2", grade=3
     )
+    problems_resp = client.get("/v1/math-problems", params={"grade": 3})
+    assert problems_resp.status_code == 200
+    total_grade_problems = len(problems_resp.json()["problems"])
 
     student_one_email = unique_email("stud1")
     client.cookies.clear()
@@ -257,7 +260,7 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     assert summary_resp.status_code == 200
     summary = summary_resp.json()
 
-    assert summary["totalProblems"] == 2
+    assert summary["totalProblems"] == total_grade_problems
     assert len(summary["students"]) == 2
 
     student_rows = {item["studentId"]: item for item in summary["students"]}
@@ -265,7 +268,7 @@ def test_teacher_progress_summary_scopes_students(client: TestClient) -> None:
     solved_two = student_rows[student_two_resp.json()["user"]["id"]]
 
     assert solved_one["solved"] == 1
-    assert solved_one["completionRate"] == 0.5
+    assert solved_one["completionRate"] == 1 / total_grade_problems
     assert solved_two["solved"] == 0
     assert solved_two["completionRate"] == 0.0
 
@@ -282,7 +285,7 @@ def test_admin_progress_summary_is_forbidden(client: TestClient) -> None:
 
 
 def test_progress_summary_handles_zero_problems(client: TestClient) -> None:
-    """Summary should return zero totals when no problems exist."""
+    """Summary should return totals based on seeded problems when none are created."""
     admin_tokens = login(client, "admin@example.com", "adminpw")
 
     teacher_email = unique_email("teacher-zero")
@@ -309,6 +312,9 @@ def test_progress_summary_handles_zero_problems(client: TestClient) -> None:
     assert student_resp.status_code == 201
 
     client.cookies.clear()
+    problems_resp = client.get("/v1/math-problems", params={"grade": 3})
+    assert problems_resp.status_code == 200
+    total_grade_problems = len(problems_resp.json()["problems"])
     summary_resp = client.get(
         "/v1/progress/students",
         headers={"Authorization": f"Bearer {teacher_token}"},
@@ -316,7 +322,7 @@ def test_progress_summary_handles_zero_problems(client: TestClient) -> None:
     assert summary_resp.status_code == 200
     summary = summary_resp.json()
 
-    assert summary["totalProblems"] == 0
+    assert summary["totalProblems"] == total_grade_problems
     assert len(summary["students"]) == 1
     student_summary = summary["students"][0]
     assert student_summary["solved"] == 0

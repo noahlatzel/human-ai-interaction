@@ -2,20 +2,16 @@
 
 from __future__ import annotations
 
-import base64
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid4
 
-from openai import AsyncOpenAI
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.student_own_exercises import (
-    ImageProcessResponse,
     StudentOwnExerciseCreate,
     StudentOwnExerciseUpdate,
 )
-from app.config import get_settings
 from app.models import StudentOwnExercise
 
 
@@ -25,17 +21,14 @@ async def create_exercise(
     data: StudentOwnExerciseCreate,
 ) -> StudentOwnExercise:
     """Create a new student own exercise."""
+    analysis_payload = data.analysis.model_dump(by_alias=True)
     exercise = StudentOwnExercise(
         id=str(uuid4()),
         user_id=user_id,
-        problem=data.problem,
-        difficulty=data.difficulty,
-        answer=data.answer,
-        grade=data.grade,
-        question_type=data.question_type,
-        metric=data.metric,
-        steps=data.steps,
-        image_path=data.image_path,
+        problem_text=data.problem_text,
+        analysis=analysis_payload,
+        language=data.language,
+        difficulty_level=data.analysis.difficulty_level,
     )
     db.add(exercise)
     await db.commit()
@@ -82,7 +75,12 @@ async def update_exercise(
     if not exercise:
         return None
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+    if "analysis" in update_data:
+        analysis: Any = update_data["analysis"]
+        update_data["analysis"] = analysis.model_dump(by_alias=True)
+        update_data["difficulty_level"] = analysis.difficulty_level
+
     for field, value in update_data.items():
         setattr(exercise, field, value)
 
@@ -106,135 +104,10 @@ async def delete_exercise(
     return True
 
 
-async def process_image_mock() -> ImageProcessResponse:
-    """Mock image processing with 2-second delay."""
-    import asyncio
-
-    await asyncio.sleep(2)
-
-    return ImageProcessResponse(
-        problem="Ein Bauer hat 24 Äpfel. Er gibt 8 Äpfel an seine Nachbarin. Wie viele Äpfel hat er noch?",
-        difficulty="leicht",
-        grade="3. Klasse",
-        question_type="Subtraktion",
-        answer=16.0,
-        metric="Äpfel",
-        steps="1. Start: 24 Äpfel\n2. Weggenommen: 8 Äpfel\n3. Rechnung: 24 - 8 = 16\n4. Antwort: 16 Äpfel",
-    )
-
-
-async def process_image_with_openai(image_bytes: bytes) -> ImageProcessResponse:
-    """Process image using OpenAI Vision API."""
-    settings = get_settings()
-
-    if (
-        not settings.openai_api_key
-        or settings.openai_api_key == "your-openai-api-key-here"
-    ):
-        # Fallback to mock if no API key configured
-        print("⚠️  No OpenAI API key configured, using mock data")
-        return await process_image_mock()
-
-    print(f"🔑 Using OpenAI API key: {settings.openai_api_key[:10]}...")
-
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-
-    # Encode image to base64
-    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-    print(f"📷 Image encoded, size: {len(image_bytes)} bytes")
-
-    prompt = """Analysiere dieses Bild einer mathematischen Textaufgabe für Grundschüler.
-
-Extrahiere folgende Informationen und gib sie im JSON-Format zurück:
-- problem: Der vollständige Aufgabentext
-- difficulty: "leicht", "mittel" oder "schwer"
-- grade: Klassenstufe (z.B. "3. Klasse")
-- question_type: Art der Aufgabe (z.B. "Addition", "Subtraktion", "Multiplikation", "Division")
-- answer: Die numerische Antwort (nur die Zahl)
-- metric: Die Maßeinheit/Objekte (z.B. "Äpfel", "Euro", "Meter")
-- steps: Lösungsschritte nummeriert (z.B. "1. ...\n2. ...\n3. ...")
-
-Antworte NUR mit einem JSON-Objekt in diesem Format:
-{
-  "problem": "...",
-  "difficulty": "leicht",
-  "grade": "3. Klasse",
-  "question_type": "Addition",
-  "answer": 42,
-  "metric": "Äpfel",
-  "steps": "1. ...\n2. ...\n3. ..."
-}"""
-
-    try:
-        print("🤖 Calling OpenAI with model: gpt-4o-mini")
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_base64}"
-                            },
-                        },
-                    ],
-                }
-            ],
-            max_tokens=1000,
-            temperature=0.3,
-        )
-
-        print("✅ OpenAI response received")
-        content = response.choices[0].message.content
-        if not content:
-            raise ValueError("Empty response from OpenAI")
-
-        print(f"📝 Response content: {content[:200]}...")
-
-        # Parse JSON from response
-        import json
-
-        # Remove markdown code blocks if present
-        content = content.strip()
-        if content.startswith("```json"):
-            content = content[7:]
-        if content.startswith("```"):
-            content = content[3:]
-        if content.endswith("```"):
-            content = content[:-3]
-        content = content.strip()
-
-        data = json.loads(content)
-        print("✅ Successfully parsed JSON response")
-
-        return ImageProcessResponse(
-            problem=data.get("problem", ""),
-            difficulty=data.get("difficulty", "mittel"),
-            grade=data.get("grade", ""),
-            question_type=data.get("question_type", ""),
-            answer=float(data.get("answer", 0)),
-            metric=data.get("metric", ""),
-            steps=data.get("steps", ""),
-        )
-    except Exception as e:
-        # On error, return mock data
-        print(f"❌ OpenAI Vision error: {type(e).__name__}: {e}")
-        import traceback
-
-        traceback.print_exc()
-        print("⚠️  Falling back to mock data")
-        return await process_image_mock()
-
-
 __all__ = [
     "create_exercise",
     "get_exercises_for_user",
     "get_exercise_by_id",
     "update_exercise",
     "delete_exercise",
-    "process_image_mock",
-    "process_image_with_openai",
 ]

@@ -16,6 +16,7 @@ from .db import create_engine, create_session_factory, run_schema_migrations
 from .middleware import session_middleware
 from .models import ClassType
 from .services import class_store, user_store
+from .services.math_seed import ensure_seed_math_problems
 
 
 @asynccontextmanager
@@ -35,6 +36,7 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             await class_store.ensure_system_class(
                 session, grade=grade, class_type=ClassType.GUEST
             )
+        await ensure_seed_math_problems(session)
         await session.commit()
 
     application.state.settings = settings
