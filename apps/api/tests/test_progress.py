@@ -26,20 +26,33 @@ def create_problem(
     token: str,
     *,
     description: str = "Sample problem",
-    solution: str = "42",
-    difficulty: str = "mittel",
     grade: int = 3,
+    difficulty_level: str = "easy",
 ) -> dict[str, Any]:
     """Create a math word problem using an authorized token."""
     response = client.post(
         "/v1/math-problems",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "problemDescription": description,
-            "solution": solution,
-            "difficulty": difficulty,
+            "problemText": description,
+            "analysis": {
+                "words": [{"text": "Two", "type": "number", "value": 2}],
+                "suggestion": "Try drawing it out.",
+                "visualCue": "apple apple",
+                "steps": ["Count the apples."],
+                "finalAnswer": 2,
+                "calculation": {"parts": [1, "+", 1]},
+                "operations": ["+"],
+                "semanticStructure": "combine",
+                "unknownPosition": "result",
+                "numberOfOperations": 1,
+                "hasIrrelevantInfo": False,
+                "relationshipType": "part-whole",
+                "difficultyLevel": difficulty_level,
+                "cognitiveLoad": 1,
+            },
             "grade": grade,
-            "operations": ["addition"],
+            "language": "en",
         },
     )
     assert response.status_code == 201
@@ -92,6 +105,7 @@ def test_student_can_set_and_update_progress(client: TestClient) -> None:
     assert set_resp.status_code == 200
     payload = set_resp.json()
     assert payload["success"] is True
+    assert payload["attemptCount"] == 1
 
     update_resp = client.post(
         "/v1/progress",
@@ -101,6 +115,7 @@ def test_student_can_set_and_update_progress(client: TestClient) -> None:
     assert update_resp.status_code == 200
     assert update_resp.json()["success"] is False
     assert update_resp.json()["id"] == payload["id"]
+    assert update_resp.json()["attemptCount"] == 2
 
 
 def test_progress_requires_success_and_valid_problem(client: TestClient) -> None:

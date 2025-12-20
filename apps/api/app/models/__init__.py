@@ -12,12 +12,7 @@ from .discussion import (
 from .learning import LearningSession
 from .learning_tip import LearningTip
 from .student_own_exercise import StudentOwnExercise
-from .math import (
-    DifficultyLevel,
-    MathWordProblem,
-    MathWordProblemOperation,
-    MathematicalOperation,
-)
+from .math import MathWordProblem
 from .progress import MathWordProblemProgress
 from .own_exercise_progress import OwnExerciseProgress
 from .session import UserSession
@@ -34,9 +29,6 @@ __all__ = [
     "LearningTip",
     "StudentOwnExercise",
     "MathWordProblem",
-    "MathWordProblemOperation",
-    "MathematicalOperation",
-    "DifficultyLevel",
     "MathWordProblemProgress",
     "Classroom",
     "ClassType",

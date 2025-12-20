@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import DifficultyLevel, MathWordProblem, MathematicalOperation
+from app.api.schemas.math_analysis import Language, MathProblemAnalysis
+from app.models import MathWordProblem
 
 
 class MathWordProblemCreate(BaseModel):
@@ -12,22 +15,16 @@ class MathWordProblemCreate(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    problem_description: str = Field(
-        validation_alias="problemDescription",
-        serialization_alias="problemDescription",
+    problem_text: str = Field(
+        validation_alias="problemText",
+        serialization_alias="problemText",
         min_length=1,
     )
+    analysis: MathProblemAnalysis
     grade: int = Field(
         ge=3, le=4, description="Grade level (3 or 4) the problem targets."
     )
-    solution: str = Field(min_length=1)
-    difficulty: DifficultyLevel
-    hints: list[str | None] | None = Field(
-        default=None,
-        max_length=3,
-        description="Optional hints (max 3); blanks/nulls ignored and stored as null",
-    )
-    operations: list[MathematicalOperation] = Field(min_length=1)
+    language: Language = Field(default="en")
 
 
 class MathWordProblemPayload(BaseModel):
@@ -36,27 +33,28 @@ class MathWordProblemPayload(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str
-    problem_description: str = Field(
-        validation_alias="problemDescription",
-        serialization_alias="problemDescription",
+    problem_text: str = Field(
+        validation_alias="problemText",
+        serialization_alias="problemText",
     )
+    analysis: MathProblemAnalysis
     grade: int
-    solution: str
-    difficulty: DifficultyLevel
-    operations: list[MathematicalOperation]
-    hints: list[str | None]
+    language: Language
+    difficulty_level: str = Field(
+        validation_alias="difficultyLevel",
+        serialization_alias="difficultyLevel",
+    )
 
     @classmethod
     def from_model(cls, problem: MathWordProblem) -> "MathWordProblemPayload":
         """Create a payload from a model instance."""
         return cls(
             id=problem.id,
-            problem_description=problem.problem_description,
-            solution=problem.solution,
+            problem_text=problem.problem_text,
+            analysis=MathProblemAnalysis.model_validate(problem.analysis),
             grade=problem.grade,
-            difficulty=problem.difficulty,
-            operations=[operation.operation for operation in problem.operations],
-            hints=[problem.hint1, problem.hint2, problem.hint3],
+            language=cast(Language, problem.language),
+            difficulty_level=problem.difficulty_level,
         )
 
 
