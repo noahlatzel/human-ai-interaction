@@ -13,7 +13,7 @@ import { studentOwnExercisesApi } from '../../student/api/studentOwnExercises';
 import { ROUTES } from '../../../lib/routes';
 import forestBackground from '../../../assets/forestBackground.png';
 import companion from '../../../assets/companion.png';
-import type { MathWordProblem, MathematicalOperation } from '../../../types/problem';
+import type { MathWordProblem } from '../../../types/problem';
 import type { StudentOwnExercise } from '../../../types/studentOwnExercise';
 import type { ExerciseSource } from '../../../types/progress';
 
@@ -40,56 +40,6 @@ export default function ProblemPage() {
   const isStudentExercise = !!state?.studentExercise;
   const studentExercise = state?.studentExercise;
 
-  console.log('ProblemPage Debug:', {
-    isStudentExercise,
-    studentExercise,
-    problemId,
-    state
-  });
-
-  // Convert StudentOwnExercise to MathWordProblem format
-  const convertedProblem: MathWordProblem | null = useMemo(() => {
-    if (!isStudentExercise || !studentExercise) return null;
-
-    // Map English difficulty levels to German
-    const difficultyMap: Record<string, 'einfach' | 'mittel' | 'schwierig'> = {
-      'easy': 'einfach',
-      'medium': 'mittel',
-      'hard': 'schwierig',
-      'einfach': 'einfach',
-      'mittel': 'mittel',
-      'schwierig': 'schwierig',
-    };
-
-    // Map questionType to MathematicalOperation
-    const operationMap: Record<string, MathematicalOperation> = {
-      'addition': 'addition',
-      'subtraction': 'subtraction',
-      'multiplication': 'multiplication',
-      'division': 'division',
-      'Addition': 'addition',
-      'Subtraktion': 'subtraction',
-      'Multiplikation': 'multiplication',
-      'Division': 'division',
-    };
-
-    const operation = studentExercise.questionType
-      ? operationMap[studentExercise.questionType]
-      : undefined;
-
-    return {
-      id: studentExercise.id,
-      problemDescription: studentExercise.problem,
-      solution: String(studentExercise.answer),
-      grade: studentExercise.grade ? parseInt(studentExercise.grade) : 3,
-      difficulty: difficultyMap[studentExercise.difficulty?.toLowerCase() || 'medium'] || 'mittel',
-      operations: operation ? [operation] : [],
-      hints: [], // Steps werden nur in der Avatar-Sprechblase angezeigt
-    };
-  }, [isStudentExercise, studentExercise]);
-
-  console.log('Converted Problem:', convertedProblem);
-
   const hookResult = useProblem(
     problemId ?? '',
     state?.problems,
@@ -100,9 +50,10 @@ export default function ProblemPage() {
     ? { problem: null, loading: false, error: null, notFound: false, refresh: async () => { } }
     : hookResult;
 
-  const problem = isStudentExercise ? convertedProblem : fetchedProblem;
-
-  console.log('Final problem:', problem, 'loading:', loading, 'error:', error, 'notFound:', notFound);
+  const problem = (isStudentExercise ? studentExercise : fetchedProblem) as
+    | MathWordProblem
+    | StudentOwnExercise
+    | null;
 
   // Reset wrong attempts when problem changes
   useEffect(() => {
@@ -118,10 +69,10 @@ export default function ProblemPage() {
   }, [loading, navigate, notFound, isStudentExercise]);
 
   const hint = useMemo(() => {
-    const hints = (problem?.hints ?? []).filter((value): value is string => Boolean(value));
-    if (hints.length > 0) return hints[0];
-    return 'Wenn du feststeckst, hat das Eichhörnchen möglicherweise einen Tipp für dich.';
-  }, [problem?.hints]);
+    if (!problem) return null;
+    const steps = problem.analysis.steps ?? [];
+    return steps[0] ?? problem.analysis.suggestion ?? 'Wenn du feststeckst, hat das Eichhörnchen möglicherweise einen Tipp für dich.';
+  }, [problem]);
 
   const normalize = (value: string) =>
     value
@@ -133,7 +84,8 @@ export default function ProblemPage() {
     if (!problem) return;
     setSubmitting(true);
     try {
-      const success = normalize(textAnswer) === normalize(problem.solution);
+      const solution = String(problem.analysis.finalAnswer);
+      const success = normalize(textAnswer) === normalize(solution);
 
       // Track wrong attempts
       if (!success) {
@@ -249,7 +201,7 @@ export default function ProblemPage() {
           <div className="space-y-4">
             <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur shadow-lg p-5 space-y-4">
               <ProblemHeader problem={problem} />
-              <ProblemStatement text={problem.problemDescription} hint={hint} />
+              <ProblemStatement text={problem.problemText} hint={hint} />
             </div>
           </div>
 
@@ -288,10 +240,10 @@ export default function ProblemPage() {
         <div className="relative rounded-2xl bg-white/95 border border-emerald-100 shadow-xl p-4 max-w-[15rem] mb-48 -mr-20 z-10">
           <div className="absolute -right-2 bottom-6 w-4 h-4 bg-white/95 border-r border-b border-emerald-100 transform -rotate-45"></div>
           <div className="space-y-1">
-            {wrongAttempts >= 2 && isStudentExercise && studentExercise?.steps ? (
+            {wrongAttempts >= 2 && problem?.analysis.steps?.length ? (
               <>
                 <p className="text-sm font-semibold text-emerald-700">Hier ist ein Tipp:</p>
-                <p className="text-sm text-slate-600">{studentExercise.steps}</p>
+                <p className="text-sm text-slate-600">{problem.analysis.steps[0]}</p>
               </>
             ) : wrongAttempts === 1 ? (
               <>

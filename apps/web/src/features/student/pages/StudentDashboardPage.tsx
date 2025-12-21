@@ -16,6 +16,7 @@ import { CreateAssignmentModal } from '../components/CreateAssignmentModal';
 import { useStreak } from '../hooks/useStreak';
 import { useClassExercises } from '../hooks/useClassExercises';
 import { useHomeworkExercises } from '../hooks/useHomeworkExercises';
+import { useAllProblems } from '../hooks/useAllProblems';
 import { useStudentOwnExercises } from '../hooks/useStudentOwnExercises';
 import { useSolvedProgress } from '../hooks/useSolvedProgress';
 import { ROUTES, getProblemRoute } from '../../../lib/routes';
@@ -36,6 +37,7 @@ export default function StudentDashboardPage() {
   const { exercises: homeworkExercises, loading: homeworkLoading } = useHomeworkExercises();
   const { streak: streakData } = useStreak();
   const { exercises: classExercises, loading: classExercisesLoading } = useClassExercises();
+  const { problems: allProblems, loading: allProblemsLoading, error: allProblemsError, reload: reloadAllProblems } = useAllProblems();
   const { solvedProblemIds, solvedOwnExerciseIds } = useSolvedProgress();
 
   const {
@@ -102,6 +104,16 @@ export default function StudentDashboardPage() {
         exerciseId: selectedExercise,
         exerciseTab: 'class'
       }
+    });
+  };
+
+  const handleFreeProblemSelect = (problemId: string) => {
+    navigate(getProblemRoute(problemId), {
+      state: {
+        problems: allProblems,
+        source: 'home_practice',
+        exerciseTab: 'own',
+      },
     });
   };
 
@@ -181,11 +193,7 @@ export default function StudentDashboardPage() {
                     <p className="text-sm text-slate-600 mb-4 px-2">{exercise.description}</p>
                   )}
                   <ProblemList
-                    problems={(exercise.problems || []).map((p) => ({
-                      ...p,
-                      difficultyLabel: p.difficulty ?? '',
-                      difficultyValue: p.difficulty === 'einfach' ? 1 : p.difficulty === 'mittel' ? 2 : p.difficulty === 'schwierig' ? 3 : 0,
-                    }))}
+                    problems={exercise.problems || []}
                     loading={false}
                     error={null}
                     onRetry={() => { }}
@@ -321,11 +329,7 @@ export default function StudentDashboardPage() {
                     <p className="text-sm text-slate-600 mb-4 px-2">{exercise.description}</p>
                   )}
                   <ProblemList
-                    problems={(exercise.problems || []).map((p) => ({
-                      ...p,
-                      difficultyLabel: p.difficulty ?? '',
-                      difficultyValue: p.difficulty === 'einfach' ? 1 : p.difficulty === 'mittel' ? 2 : p.difficulty === 'schwierig' ? 3 : 0,
-                    }))}
+                    problems={exercise.problems || []}
                     loading={false}
                     error={null}
                     onRetry={() => { }}
@@ -443,7 +447,7 @@ export default function StudentDashboardPage() {
           </div>
         </div>
         <p className="text-sm text-slate-600">
-          Erstelle deine eigenen Aufgaben oder lade ein Foto hoch, um automatisch eine Aufgabe zu generieren.
+          Erstelle deine eigenen Aufgaben und lasse sie automatisch analysieren.
         </p>
         <DashboardTabs active={activeTab} onChange={setActiveTab} />
       </div>
@@ -453,12 +457,37 @@ export default function StudentDashboardPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
         </div>
       ) : (
-        <OwnAssignmentsList
-          exercises={ownExercises}
-          onDelete={deleteExercise}
-          onUpdate={updateExerciseInState}
-          solvedOwnExerciseIds={solvedOwnExerciseIds}
-        />
+        <div className="space-y-6">
+          <OwnAssignmentsList
+            exercises={ownExercises}
+            onDelete={deleteExercise}
+            onUpdate={updateExerciseInState}
+            solvedOwnExerciseIds={solvedOwnExerciseIds}
+          />
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-slate-900">Alle Aufgaben</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  void reloadAllProblems();
+                }}
+                className="text-xs font-semibold text-slate-600 hover:text-slate-800"
+              >
+                Aktualisieren
+              </button>
+            </div>
+            <ProblemList
+              problems={allProblems}
+              loading={allProblemsLoading}
+              error={allProblemsError}
+              onRetry={() => {
+                void reloadAllProblems();
+              }}
+              onSelect={handleFreeProblemSelect}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

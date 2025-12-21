@@ -1,8 +1,8 @@
-import { formatOperation, getDifficultyMeta } from '../../problems/utils';
-import type { MathWordProblemWithMeta } from '../../../types/problem';
+import { formatOperation, getDifficultyMeta, getOperationMeta } from '../../problems/utils';
+import type { MathWordProblem } from '../../../types/problem';
 
 type ProblemCardProps = {
-  problem: MathWordProblemWithMeta;
+  problem: MathWordProblem;
   onSelect: (problemId: string) => void;
 };
 
@@ -13,26 +13,13 @@ const toneClasses: Record<string, string> = {
   rose: 'bg-rose-50 text-rose-700',
 };
 
-const colorMap: Record<string, string> = {
-  addition: 'from-orange-50 to-amber-50 border-orange-100',
-  subtraction: 'from-orange-50 to-amber-50 border-orange-100',
-  multiplication: 'from-blue-50 to-indigo-50 border-blue-100',
-  division: 'from-blue-50 to-indigo-50 border-blue-100',
-};
-
-const operationIcons: Record<string, string> = {
-  addition: '➕',
-  subtraction: '➖',
-  multiplication: '✖️',
-  division: '➗',
-};
-
 export default function ProblemCard({ problem, onSelect }: ProblemCardProps) {
-  const difficulty = getDifficultyMeta(problem.difficulty);
+  const difficulty = getDifficultyMeta(problem.difficultyLevel);
   const toneClass = toneClasses[difficulty.tone] ?? 'bg-slate-100 text-slate-700';
-  const mainOperation = problem.operations[0];
-  const gradient = colorMap[mainOperation] ?? 'from-slate-50 to-white border-slate-100';
-  const icon = operationIcons[mainOperation] ?? '📝';
+  const operations = problem.analysis.operations ?? [];
+  const mainOperation = getOperationMeta(operations[0]);
+  const gradient = mainOperation?.gradient ?? 'from-slate-50 to-white border-slate-100';
+  const icon = mainOperation?.icon ?? '📝';
 
   return (
     <button
@@ -47,7 +34,7 @@ export default function ProblemCard({ problem, onSelect }: ProblemCardProps) {
               {icon}
             </span>
             <div className="flex flex-wrap gap-2">
-              {problem.operations.map((op) => (
+              {operations.map((op) => (
                 <span
                   key={op}
                   className="px-2 py-1 text-xs font-semibold rounded-full bg-white/70 text-slate-700 border border-white/60"
@@ -61,7 +48,7 @@ export default function ProblemCard({ problem, onSelect }: ProblemCardProps) {
             {difficulty.label}
           </span>
         </div>
-        <p className="text-base font-semibold text-slate-900 line-clamp-2">{problem.problemDescription}</p>
+        <p className="text-base font-semibold text-slate-900 line-clamp-2">{problem.problemText}</p>
         <p className="text-xs text-slate-600 line-clamp-1">Loslegen und Lösung skizzieren</p>
       </div>
     </button>

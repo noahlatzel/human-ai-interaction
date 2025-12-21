@@ -1,8 +1,8 @@
 import ProblemCard from './ProblemCard';
-import type { MathWordProblemWithMeta } from '../../../types/problem';
+import type { MathWordProblem } from '../../../types/problem';
 
 type ProblemListProps = {
-  problems: MathWordProblemWithMeta[];
+  problems: MathWordProblem[];
   loading: boolean;
   error: string | null;
   onRetry: () => void;

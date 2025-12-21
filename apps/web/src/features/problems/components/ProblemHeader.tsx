@@ -2,7 +2,7 @@ import { formatOperation, getDifficultyMeta } from '../utils';
 import type { MathWordProblem } from '../../../types/problem';
 
 type ProblemHeaderProps = {
-  problem: MathWordProblem;
+  problem: Pick<MathWordProblem, 'analysis' | 'difficultyLevel'>;
 };
 
 const toneClasses: Record<string, string> = {
@@ -13,14 +13,14 @@ const toneClasses: Record<string, string> = {
 };
 
 export default function ProblemHeader({ problem }: ProblemHeaderProps) {
-  const difficulty = getDifficultyMeta(problem.difficulty);
+  const difficulty = getDifficultyMeta(problem.difficultyLevel);
   const toneClass = toneClasses[difficulty.tone] ?? 'bg-slate-100 text-slate-700';
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          {problem.operations.map((op) => (
+          {problem.analysis.operations.map((op) => (
             <span key={op} className="px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
               {formatOperation(op)}
             </span>

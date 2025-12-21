@@ -1,46 +1,24 @@
+import type { DifficultyLevel, Language, MathProblemAnalysis } from './problem';
+
 export interface StudentOwnExercise {
-    id: string;
-    userId: string;
-    problem: string;
-    difficulty: string;
-    answer: number;
-    grade: string | null;
-    questionType: string | null;
-    metric: string | null;
-    steps: string | null;
-    imagePath: string | null;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  userId: string;
+  problemText: string;
+  analysis: MathProblemAnalysis;
+  language: Language;
+  difficultyLevel: DifficultyLevel;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface StudentOwnExerciseCreate {
-    problem: string;
-    difficulty: string;
-    answer: number;
-    grade?: string;
-    questionType?: string;
-    metric?: string;
-    steps?: string;
-    imagePath?: string;
+  problemText: string;
+  analysis: MathProblemAnalysis;
+  language: Language;
 }
 
 export interface StudentOwnExerciseUpdate {
-    problem?: string;
-    difficulty?: string;
-    answer?: number;
-    grade?: string;
-    questionType?: string;
-    metric?: string;
-    steps?: string;
-    imagePath?: string;
-}
-
-export interface ImageProcessResponse {
-    problem: string;
-    difficulty: string;
-    grade: string;
-    questionType: string;
-    answer: number;
-    metric: string;
-    steps: string;
+  problemText?: string | null;
+  analysis?: MathProblemAnalysis | null;
+  language?: Language | null;
 }
