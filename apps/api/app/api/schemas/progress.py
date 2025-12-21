@@ -38,6 +38,7 @@ class ProgressPayload(BaseModel):
     math_word_problem_id: str = Field(alias="mathWordProblemId")
     student_id: str = Field(alias="studentId")
     success: bool
+    attempt_count: int = Field(alias="attemptCount")
 
     @classmethod
     def from_model(cls, record: MathWordProblemProgress) -> "ProgressPayload":
@@ -48,6 +49,7 @@ class ProgressPayload(BaseModel):
                 "mathWordProblemId": record.math_word_problem_id,
                 "studentId": record.student_id,
                 "success": record.success,
+                "attemptCount": record.attempt_count,
             }
         )
 

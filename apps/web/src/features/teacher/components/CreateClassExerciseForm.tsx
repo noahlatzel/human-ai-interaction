@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import type { MathWordProblem } from '../../../types/problem';
+import { formatOperation, getDifficultyMeta } from '../../problems/utils';
 import type { CreateClassExerciseRequest, ExerciseType } from '../../../types/classExercise';
 
 type CreateClassExerciseFormProps = {
@@ -186,14 +187,14 @@ export default function CreateClassExerciseForm({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{problem.problemDescription}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">{problem.problemText}</p>
                     <div className="flex gap-2 mt-1">
                       <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                        {problem.difficulty}
+                        {getDifficultyMeta(problem.difficultyLevel).label}
                       </span>
-                      {problem.operations.map(op => (
+                      {problem.analysis.operations.map(op => (
                         <span key={op} className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                          {op}
+                          {formatOperation(op)}
                         </span>
                       ))}
                     </div>

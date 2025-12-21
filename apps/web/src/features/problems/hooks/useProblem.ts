@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../lib/apiClient';
-import { mapOperations } from '../utils';
 import { getProblems } from '../../student/api/getProblems';
 import type { MathWordProblem } from '../../../types/problem';
 
@@ -36,7 +35,7 @@ export function useProblem(problemId: string, seedProblems?: MathWordProblem[]):
     try {
       const next = findProblem(seedProblems);
       if (next) {
-        setProblem({ ...next, operations: mapOperations(next.operations) });
+        setProblem(next);
         return;
       }
       const result = await getProblems();
@@ -46,7 +45,7 @@ export function useProblem(problemId: string, seedProblems?: MathWordProblem[]):
         setNotFound(true);
         return;
       }
-      setProblem({ ...found, operations: mapOperations(found.operations) });
+      setProblem(found);
     } catch (err) {
       setError(deriveError(err));
     } finally {

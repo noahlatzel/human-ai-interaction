@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import AuthContext, require_roles
 from app.api.schemas.student_own_exercises import (
-    ImageProcessResponse,
     StudentOwnExerciseCreate,
     StudentOwnExerciseResponse,
     StudentOwnExerciseUpdate,
@@ -182,19 +181,6 @@ async def solve_student_exercise(
         message="Progress tracked" if data.success else "Solution recorded",
         new_achievements=new_achievements,
     )
-
-
-@router.post("/process-image", response_model=ImageProcessResponse)
-async def process_image(
-    _actor: AuthContext = Depends(require_roles("student")),
-    file: UploadFile = File(...),
-) -> ImageProcessResponse:
-    """Process an uploaded image and extract exercise data using OpenAI Vision."""
-    # Read image bytes
-    image_bytes = await file.read()
-
-    # Process with OpenAI Vision API
-    return await service.process_image_with_openai(image_bytes)
 
 
 __all__ = ["router"]

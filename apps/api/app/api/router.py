@@ -11,6 +11,7 @@ from . import (
     discussions,
     guest,
     learning_tips,
+    math_helper,
     math_word_problems,
     notifications,
     progress,
@@ -26,6 +27,7 @@ api_router.include_router(guest.router, prefix="/auth", tags=["auth"])
 api_router.include_router(classes.router, tags=["classes"])
 api_router.include_router(users.router, tags=["users"])
 api_router.include_router(math_word_problems.router)
+api_router.include_router(math_helper.router)
 api_router.include_router(progress.router)
 api_router.include_router(class_exercises.router)
 api_router.include_router(learning_tips.router)

@@ -13,6 +13,7 @@
   "dependencies": {
     "date-fns": "^4.1.0",
     "lucide-react": "^0.556.0",
+    "pdfjs-dist": "^4.10.38",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.66.0",

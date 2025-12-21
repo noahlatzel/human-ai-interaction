@@ -29,26 +29,47 @@ def create_teacher(client: TestClient, admin_token: str) -> tuple[str, str]:
     return email, body["user"]["id"]
 
 
+def build_analysis(difficulty_level: str = "easy") -> dict[str, Any]:
+    """Return a minimal analysis payload for tests."""
+    return {
+        "words": [
+            {"text": "Two", "type": "number", "value": 2},
+            {"text": "apples", "type": "object"},
+        ],
+        "suggestion": "Try drawing it out.",
+        "visualCue": "apple apple",
+        "steps": ["Count the apples."],
+        "finalAnswer": 2,
+        "calculation": {"parts": [1, "+", 1]},
+        "operations": ["+"],
+        "semanticStructure": "combine",
+        "unknownPosition": "result",
+        "numberOfOperations": 1,
+        "hasIrrelevantInfo": False,
+        "relationshipType": "part-whole",
+        "difficultyLevel": difficulty_level,
+        "cognitiveLoad": 1,
+    }
+
+
 def create_problem(
     client: TestClient,
     token: str,
     *,
-    problem_description: str = "Sample problem",
-    solution: str = "42",
-    difficulty: str = "mittel",
+    problem_text: str = "Sample problem",
+    analysis: dict[str, Any] | None = None,
     grade: int = 3,
-    operations: list[str] | None = None,
+    language: str = "en",
 ) -> dict[str, Any]:
     """Helper to create a math word problem."""
     response = client.post(
         "/v1/math-problems",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "problemDescription": problem_description,
-            "solution": solution,
-            "difficulty": difficulty,
+            "problemText": problem_text,
+            "analysis": analysis or build_analysis(),
             "grade": grade,
-            "operations": operations or ["addition"],
+            "language": language,
         },
     )
     assert response.status_code == 201
@@ -74,11 +95,9 @@ def test_create_requires_teacher_or_admin(client: TestClient) -> None:
         "/v1/math-problems",
         headers={"Authorization": f"Bearer {student_tokens['accessToken']}"},
         json={
-            "problemDescription": "Add two numbers.",
-            "solution": "2",
-            "difficulty": "einfach",
+            "problemText": "Add two numbers.",
+            "analysis": build_analysis(),
             "grade": 3,
-            "operations": ["addition"],
         },
     )
     assert create_resp.status_code == 403
@@ -90,11 +109,9 @@ def test_create_requires_teacher_or_admin(client: TestClient) -> None:
         "/v1/math-problems",
         headers={"Authorization": f"Bearer {admin_tokens['accessToken']}"},
         json={
-            "problemDescription": "Admin not allowed.",
-            "solution": "0",
-            "difficulty": "einfach",
+            "problemText": "Admin not allowed.",
+            "analysis": build_analysis(),
             "grade": 3,
-            "operations": ["addition"],
         },
     )
     assert admin_resp.status_code == 403
@@ -107,44 +124,36 @@ def test_teacher_create_filter_and_sort(client: TestClient) -> None:
     )
     teacher_tokens = login(client, teacher_email, "teachpw")
 
-    first = create_problem(
+    created_medium = create_problem(
         client,
         teacher_tokens["accessToken"],
-        problem_description="Add and subtract.",
-        solution="0",
-        difficulty="mittel",
-        operations=["addition", "subtraction"],
+        problem_text="Add and subtract.",
+        analysis=build_analysis("medium"),
     )
-    second = create_problem(
+    created_hard = create_problem(
         client,
         teacher_tokens["accessToken"],
-        problem_description="Add and multiply.",
-        solution="0",
-        difficulty="schwierig",
-        operations=["addition", "multiplication"],
+        problem_text="Add and multiply.",
+        analysis=build_analysis("hard"),
     )
-    third = create_problem(
+    created_easy = create_problem(
         client,
         teacher_tokens["accessToken"],
-        problem_description="Subtract then add.",
-        solution="0",
-        difficulty="einfach",
-        operations=["subtraction", "addition"],
+        problem_text="Subtract then add.",
+        analysis=build_analysis("easy"),
     )
-
-    filter_resp = client.get(
-        "/v1/math-problems",
-        params=[("operations", "addition"), ("operations", "subtraction")],
-    )
-    assert filter_resp.status_code == 200
-    filtered_ids = {item["id"] for item in filter_resp.json()["problems"]}
-    assert filtered_ids == {first["id"], third["id"]}
-    assert second["id"] not in filtered_ids
 
     sort_resp = client.get("/v1/math-problems", params={"difficultyOrder": "desc"})
     assert sort_resp.status_code == 200
-    difficulties = [item["difficulty"] for item in sort_resp.json()["problems"]]
-    assert difficulties == ["schwierig", "mittel", "einfach"]
+    problems = sort_resp.json()["problems"]
+    difficulties = [item["difficultyLevel"] for item in problems]
+    order = {"easy": 1, "medium": 2, "hard": 3}
+    assert all(
+        order[left] >= order[right]
+        for left, right in zip(difficulties, difficulties[1:])
+    )
+    ids = {item["id"] for item in problems}
+    assert {created_easy["id"], created_medium["id"], created_hard["id"]}.issubset(ids)
 
 
 def test_student_lists_only_matching_grade(client: TestClient) -> None:
@@ -165,13 +174,13 @@ def test_student_lists_only_matching_grade(client: TestClient) -> None:
     grade_three_problem = create_problem(
         client,
         teacher_tokens["accessToken"],
-        problem_description="Grade 3 problem",
+        problem_text="Grade 3 problem",
         grade=3,
     )
     grade_four_problem = create_problem(
         client,
         teacher_tokens["accessToken"],
-        problem_description="Grade 4 problem",
+        problem_text="Grade 4 problem",
         grade=4,
     )
 
@@ -217,10 +226,8 @@ def test_teacher_can_delete_problem_and_admin_is_forbidden(client: TestClient) -
     created = create_problem(
         client,
         teacher_tokens["accessToken"],
-        problem_description="Delete me",
-        solution="N/A",
-        difficulty="mittel",
-        operations=["division"],
+        problem_text="Delete me",
+        analysis=build_analysis("medium"),
     )
 
     delete_resp = client.delete(
@@ -252,11 +259,9 @@ def test_invalid_difficulty_rejected(client: TestClient) -> None:
         "/v1/math-problems",
         headers={"Authorization": f"Bearer {teacher_tokens['accessToken']}"},
         json={
-            "problemDescription": "Too hard?",
-            "solution": "N/A",
-            "difficulty": "unmoeglich",
+            "problemText": "Too hard?",
+            "analysis": build_analysis("impossible"),
             "grade": 3,
-            "operations": ["addition"],
         },
     )
     assert response.status_code == 422

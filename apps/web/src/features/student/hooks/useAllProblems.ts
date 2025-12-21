@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../lib/apiClient';
-import { getHomeworkProblems } from '../api/getProblems';
+import { getProblems } from '../api/getProblems';
 import type { MathWordProblem } from '../../../types/problem';
 
-type UseStudentProblemsResult = {
+type UseAllProblemsResult = {
   problems: MathWordProblem[];
   loading: boolean;
   error: string | null;
@@ -16,7 +16,7 @@ const deriveError = (error: unknown) => {
   return 'Unerwarteter Fehler';
 };
 
-export function useStudentProblems(): UseStudentProblemsResult {
+export function useAllProblems(): UseAllProblemsResult {
   const [state, setState] = useState<MathWordProblem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function useStudentProblems(): UseStudentProblemsResult {
     setLoading(true);
     setError(null);
     try {
-      const result = await getHomeworkProblems();
+      const result = await getProblems();
       setState(result.problems);
     } catch (err) {
       setError(deriveError(err));

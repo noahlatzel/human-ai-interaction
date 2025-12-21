@@ -73,12 +73,14 @@ async def set_progress(
 
     if record:
         record.success = success
+        record.attempt_count += 1
     else:
         record = MathWordProblemProgress(
             id=str(uuid4()),
             math_word_problem_id=problem_id,
             student_id=student_id,
             success=success,
+            attempt_count=1,
         )
         session.add(record)
 
@@ -99,10 +101,10 @@ async def set_progress(
                 user.solved_tasks += 1
 
                 # Calculate XP based on difficulty
-                xp_gain = 10  # Default/Einfach
-                if str(problem.difficulty) == "mittel":
+                xp_gain = 10
+                if problem.difficulty_level == "medium":
                     xp_gain = 20
-                elif str(problem.difficulty) == "schwierig":
+                elif problem.difficulty_level == "hard":
                     xp_gain = 30
 
                 user.xp += xp_gain
